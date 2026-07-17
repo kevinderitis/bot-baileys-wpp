@@ -9,9 +9,12 @@ import logger from './utils/logger.js';
 logger.info('Iniciando Bot de WhatsApp con Baileys...');
 
 if (config.mongo.enabled) {
-  mongoose.connect(config.mongo.uri)
-    .then(() => logger.info('Conectado a MongoDB'))
-    .catch(err => logger.error({ err }, 'Error conectando a MongoDB'));
+  try {
+    await mongoose.connect(config.mongo.uri);
+    logger.info('Conectado a MongoDB');
+  } catch (err) {
+    logger.error({ err }, 'Error conectando a MongoDB');
+  }
 } else {
   logger.warn('MongoDB no configurado. El historial NO se persistirá.');
 }

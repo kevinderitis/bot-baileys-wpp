@@ -29,7 +29,7 @@ async function useMongoDBAuthState() {
     }
   };
 
-  const creds = await read(`${KEY_PREFIX}creds`) || {};
+  const creds = await read(`${KEY_PREFIX}creds`);
 
   const keys = {
     get: async (type, ids) => {

@@ -72,10 +72,13 @@ async function processWithGroq(sock, userId, combinedBody, quotedMsg, remoteJid)
     response = buildRuleResponse(intent);
   }
 
-  await simulateTyping(sock, remoteJid, response);
-
-  await sock.sendMessage(remoteJid, { text: response }, { quoted: quotedMsg });
-  logger.info({ userId, response: response.slice(0, 80) }, 'MENSAJE SALIENTE (Groq)');
+  try {
+    await simulateTyping(sock, remoteJid, response);
+    await sock.sendMessage(remoteJid, { text: response }, { quoted: quotedMsg });
+    logger.info({ userId, response: response.slice(0, 80) }, 'MENSAJE SALIENTE (Groq)');
+  } catch (err) {
+    logger.error({ err }, 'Error enviando mensaje (socket cerrado)');
+  }
 }
 
 async function drainBuffer(sock, userId, remoteJid) {
@@ -148,9 +151,13 @@ function makeHandler(sock) {
         const intent = classifyIntent(body);
         const response = buildRuleResponse(intent);
 
-        await simulateTyping(sock, remoteJid, response);
-        await sock.sendMessage(remoteJid, { text: response }, { quoted: msg });
-        logger.info({ number, intent, response: response.slice(0, 80) }, 'MENSAJE SALIENTE');
+        try {
+          await simulateTyping(sock, remoteJid, response);
+          await sock.sendMessage(remoteJid, { text: response }, { quoted: msg });
+          logger.info({ number, intent, response: response.slice(0, 80) }, 'MENSAJE SALIENTE');
+        } catch (err) {
+          logger.error({ err }, 'Error enviando mensaje (socket cerrado)');
+        }
       }
     }
   };
