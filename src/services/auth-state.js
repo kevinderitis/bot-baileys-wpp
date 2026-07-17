@@ -49,7 +49,11 @@ async function useMongoDBAuthState() {
   };
 
   let creds = await read(`${KEY_PREFIX}creds`);
+  if (creds) {
+    logger.info({ registered: creds.registered, hasMe: !!creds.me }, 'Credenciales cargadas desde MongoDB');
+  }
   if (!creds || !creds.registered) {
+    logger.warn('No hay credenciales válidas, generando nuevas...');
     await Auth.deleteMany({ _id: new RegExp(`^${KEY_PREFIX}`) });
     creds = initAuthCreds();
   }
@@ -82,7 +86,10 @@ async function useMongoDBAuthState() {
   };
 
   const saveCreds = async () => {
-    const p = write(`${KEY_PREFIX}creds`, creds);
+    const p = (async () => {
+      await saveCredsPromise;
+      await write(`${KEY_PREFIX}creds`, creds);
+    })();
     saveCredsPromise = p;
     await p;
   };
