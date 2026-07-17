@@ -43,7 +43,11 @@ async function useMongoDBAuthState() {
     }
   };
 
-  const creds = await read(`${KEY_PREFIX}creds`) || initAuthCreds();
+  let creds = await read(`${KEY_PREFIX}creds`);
+  if (!creds || !creds.registered) {
+    await Auth.deleteMany({ _id: new RegExp(`^${KEY_PREFIX}`) });
+    creds = initAuthCreds();
+  }
 
   const keys = {
     get: async (type, ids) => {
