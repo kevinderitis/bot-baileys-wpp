@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: bot-baileys-wpp
+    runtime: node
+    repo: https://github.com/kevinderitis/bot-baileys-wpp
+    plan: free
+    region: ohio
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.14.0
+      - key: AUTH_STORE
+        value: mongo
+      - key: MONGODB_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: GROQ_SUMMARY_MODEL
+        value: llama-3.1-8b-instant
+      - key: SESSION_PATH
+        value: /opt/render/.sessions
+      - key: MIN_DELAY_SECONDS
+        value: "3"
+      - key: MAX_DELAY_SECONDS
+        value: "25"
+      - key: TYPING_SPEED_CPS
+        value: "15"

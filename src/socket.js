@@ -9,6 +9,7 @@ import NodeCache from 'node-cache';
 import qrcode from 'qrcode-terminal';
 import config from './config.js';
 import logger from './utils/logger.js';
+import { useMongoDBAuthState } from './services/auth-state.js';
 
 const msgRetryCache = new NodeCache({ stdTTL: 300 });
 
@@ -16,7 +17,10 @@ let sock = null;
 let messageHandler = null;
 
 async function createSocket() {
-  const { state, saveCreds } = await useMultiFileAuthState(config.session.path);
+  const authStore = config.session.store === 'mongo' && config.mongo.enabled
+    ? await useMongoDBAuthState()
+    : await useMultiFileAuthState(config.session.path);
+  const { state, saveCreds } = authStore;
   const { version, isLatest } = await fetchLatestBaileysVersion();
 
   logger.info({ version, isLatest }, 'Versión de Baileys');

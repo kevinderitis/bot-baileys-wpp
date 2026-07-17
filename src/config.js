@@ -3,6 +3,7 @@ import 'dotenv/config';
 export default {
   session: {
     path: process.env.SESSION_PATH || './sessions',
+    store: process.env.AUTH_STORE || 'file',
   },
 
   mongo: {
