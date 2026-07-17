@@ -9,7 +9,7 @@ import NodeCache from 'node-cache';
 import qrcode from 'qrcode-terminal';
 import config from './config.js';
 import logger from './utils/logger.js';
-import { useMongoDBAuthState } from './services/auth-state.js';
+import { useMongoDBAuthState, saveCredsPromise, clearAllAuth } from './services/auth-state.js';
 
 const msgRetryCache = new NodeCache({ stdTTL: 300 });
 
@@ -51,7 +51,7 @@ async function createSocket() {
     sock.ev.on('messages.upsert', messageHandler);
   }
 
-  sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+  sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       currentQR = qr;
       qrcode.generate(qr, { small: true });
@@ -77,10 +77,14 @@ async function createSocket() {
       logger.warn({ statusCode }, 'Conexión cerrada');
 
       if (shouldReconnect) {
+        logger.info('Esperando a que se guarden las credenciales...');
+        await saveCredsPromise;
         logger.info('Reconectando en 5 segundos...');
         setTimeout(() => createSocket(), 5000);
       } else {
-        logger.error('Sesión cerrada. Elimina la carpeta sessions y reinicia.');
+        logger.error('Sesión cerrada. Limpiando credenciales stale y reiniciando...');
+        await clearAllAuth();
+        setTimeout(() => createSocket(), 5000);
       }
     }
   });

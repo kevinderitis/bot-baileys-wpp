@@ -6,6 +6,9 @@ import logger from '../utils/logger.js';
 const KEY_PREFIX = 'baileys:';
 const { Binary } = mongoose.mongo;
 
+let cachedState = null;
+let saveCredsPromise = Promise.resolve();
+
 function binaryToBuffer(obj) {
   if (obj instanceof Binary) return Buffer.from(obj.buffer);
   if (Array.isArray(obj)) return obj.map(binaryToBuffer);
@@ -18,6 +21,8 @@ function binaryToBuffer(obj) {
 }
 
 async function useMongoDBAuthState() {
+  if (cachedState) return cachedState;
+
   const read = async (id) => {
     try {
       const doc = await Auth.findById(id);
@@ -77,12 +82,21 @@ async function useMongoDBAuthState() {
   };
 
   const saveCreds = async () => {
-    await write(`${KEY_PREFIX}creds`, creds);
+    const p = write(`${KEY_PREFIX}creds`, creds);
+    saveCredsPromise = p;
+    await p;
   };
+
+  cachedState = { state: { creds, keys }, saveCreds };
 
   logger.info('Usando autenticación persistente en MongoDB');
 
-  return { state: { creds, keys }, saveCreds };
+  return cachedState;
 }
 
-export { useMongoDBAuthState };
+async function clearAllAuth() {
+  cachedState = null;
+  await Auth.deleteMany({ _id: new RegExp(`^${KEY_PREFIX}`) });
+}
+
+export { useMongoDBAuthState, saveCredsPromise, clearAllAuth };
