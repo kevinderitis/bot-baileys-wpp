@@ -1,3 +1,4 @@
+import { initAuthCreds } from '@whiskeysockets/baileys';
 import Auth from '../models/Auth.js';
 import logger from '../utils/logger.js';
 
@@ -29,7 +30,7 @@ async function useMongoDBAuthState() {
     }
   };
 
-  const creds = await read(`${KEY_PREFIX}creds`);
+  const creds = await read(`${KEY_PREFIX}creds`) || initAuthCreds();
 
   const keys = {
     get: async (type, ids) => {
