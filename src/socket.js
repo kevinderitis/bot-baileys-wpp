@@ -15,6 +15,7 @@ const msgRetryCache = new NodeCache({ stdTTL: 300 });
 
 let sock = null;
 let messageHandler = null;
+let currentQR = null;
 
 async function createSocket() {
   const authStore = config.session.store === 'mongo' && config.mongo.enabled
@@ -52,8 +53,10 @@ async function createSocket() {
 
   sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
     if (qr) {
+      currentQR = qr;
       qrcode.generate(qr, { small: true });
       logger.info('Escanea el código QR con WhatsApp');
+      logger.info('O visita /qr en el navegador para escanear');
       return;
     }
 
@@ -96,4 +99,8 @@ function getSocket() {
   return sock;
 }
 
-export { createSocket as default, setMessageHandler, getSocket };
+function getQR() {
+  return currentQR;
+}
+
+export { createSocket as default, setMessageHandler, getSocket, getQR };
