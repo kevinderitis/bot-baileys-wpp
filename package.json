@@ -1,0 +1,24 @@
+{
+  "name": "bot-whatsapp-agencia",
+  "version": "1.0.0",
+  "description": "WhatsApp Bot para agencia con Baileys + protecciones anti-ban",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "clean": "rm -rf sessions"
+  },
+  "type": "module",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "groq-sdk": "^0.11.0",
+    "libsignal-node": "github:whiskeysockets/libsignal-node",
+    "node-cache": "^5.1.2",
+    "mongoose": "^8.9.5",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.0.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

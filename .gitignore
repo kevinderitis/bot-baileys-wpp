@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+
+# Entorno
+.env
+.env.local
+
+# Sesión de WhatsApp
+sessions/
+.wwebjs_cache/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test
+test-session/
