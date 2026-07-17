@@ -1,14 +1,27 @@
 import { initAuthCreds } from '@whiskeysockets/baileys';
+import mongoose from 'mongoose';
 import Auth from '../models/Auth.js';
 import logger from '../utils/logger.js';
 
 const KEY_PREFIX = 'baileys:';
+const { Binary } = mongoose.mongo;
+
+function binaryToBuffer(obj) {
+  if (obj instanceof Binary) return Buffer.from(obj.buffer);
+  if (Array.isArray(obj)) return obj.map(binaryToBuffer);
+  if (obj && typeof obj === 'object' && obj.constructor === Object) {
+    const result = {};
+    for (const key of Object.keys(obj)) result[key] = binaryToBuffer(obj[key]);
+    return result;
+  }
+  return obj;
+}
 
 async function useMongoDBAuthState() {
   const read = async (id) => {
     try {
       const doc = await Auth.findById(id);
-      return doc ? doc.value : null;
+      return doc ? binaryToBuffer(doc.value) : null;
     } catch {
       return null;
     }
