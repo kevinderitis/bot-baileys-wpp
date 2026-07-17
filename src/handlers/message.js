@@ -4,6 +4,7 @@ import { simulateTyping } from '../utils/typing.js';
 import { pickResponse } from '../responses/example.js';
 import ConversationManager from '../services/ConversationManager.js';
 import config from '../config.js';
+import { getSocket } from '../socket.js';
 
 const cm = (config.groq.enabled && config.mongo.enabled) ? new ConversationManager() : null;
 
@@ -56,7 +57,10 @@ function buildRuleResponse(intent) {
   return pickResponse(intent);
 }
 
-async function processWithGroq(sock, userId, combinedBody, quotedMsg, remoteJid) {
+async function processWithGroq(userId, combinedBody, quotedMsg, remoteJid) {
+  const sock = getSocket();
+  if (!sock) return;
+
   const delay = getRandomDelay();
   const groqPromise = cm.chat(userId, combinedBody);
 
@@ -81,7 +85,10 @@ async function processWithGroq(sock, userId, combinedBody, quotedMsg, remoteJid)
   }
 }
 
-async function drainBuffer(sock, userId, remoteJid) {
+async function drainBuffer(userId, remoteJid) {
+  const sock = getSocket();
+  if (!sock) return;
+
   const buffered = messageBuffer.get(userId);
   if (!buffered || buffered.length === 0) return;
 
@@ -97,18 +104,20 @@ async function drainBuffer(sock, userId, remoteJid) {
     logger.error({ err }, 'Error marcando como leídos');
   }
 
-  const promise = processWithGroq(sock, userId, combinedBody, lastMsg, remoteJid);
+  const promise = processWithGroq(userId, combinedBody, lastMsg, remoteJid);
   pendingQueries.set(userId, promise);
   try {
     await promise;
   } finally {
     pendingQueries.delete(userId);
-    await drainBuffer(sock, userId, remoteJid);
+    await drainBuffer(userId, remoteJid);
   }
 }
 
-function makeHandler(sock) {
+function makeHandler() {
   return async function handleMessage({ messages }) {
+    const sock = getSocket();
+    if (!sock) return;
     for (const msg of messages) {
       if (msg.key.fromMe) continue;
 
@@ -135,13 +144,13 @@ function makeHandler(sock) {
       }
 
       if (cm) {
-        const promise = processWithGroq(sock, number, body, msg, remoteJid);
+        const promise = processWithGroq(number, body, msg, remoteJid);
         pendingQueries.set(number, promise);
         try {
           await promise;
         } finally {
           pendingQueries.delete(number);
-          await drainBuffer(sock, number, remoteJid);
+          await drainBuffer(number, remoteJid);
         }
       } else {
         const delay = getRandomDelay();

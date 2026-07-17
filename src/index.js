@@ -66,5 +66,5 @@ app.listen(config.server.port, () => {
 });
 
 const sock = await createSocket();
-const handler = makeHandler(sock);
+const handler = makeHandler();
 setMessageHandler(handler);
