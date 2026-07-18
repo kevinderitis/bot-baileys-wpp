@@ -62,7 +62,7 @@ async function processWithGroq(userId, combinedBody, remoteJid) {
   if (!sock) return;
 
   const delay = getRandomDelay();
-  const groqPromise = cm.chat(userId, combinedBody);
+  const groqPromise = cm.chat(userId, combinedBody, remoteJid);
 
   logger.info({ delayMs: Math.round(delay) }, 'Esperando antes de responder...');
   await new Promise(r => setTimeout(r, delay));
@@ -103,7 +103,7 @@ async function drainBuffer(userId, remoteJid) {
     logger.error({ err }, 'Error marcando como leídos');
   }
 
-  const promise = processWithGroq(userId, combinedBody, remoteJid);
+  const promise = processWithGroq(userId, combinedBody, remoteJid); // remoteJid from outer scope
   pendingQueries.set(userId, promise);
   try {
     await promise;

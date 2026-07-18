@@ -185,7 +185,7 @@ class ConversationManager {
     return messagesSinceSummary >= this.summarizeAfter;
   }
 
-  async chat(userId, userMessage) {
+  async chat(userId, userMessage, remoteJid) {
     await this.saveMessage(userId, 'user', userMessage);
 
     const { messages, conversation } = await this.buildContext(userId, userMessage);
@@ -197,7 +197,7 @@ class ConversationManager {
       for (const call of result.tool_calls) {
         if (call.function.name === 'saveCustomerName') {
           const args = JSON.parse(call.function.arguments);
-          await this.setCustomerInfo(userId, args.name, userId);
+          await this.setCustomerInfo(userId, args.name, remoteJid);
         }
       }
       messages.push(result);
