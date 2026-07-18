@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import QR from 'qrcode';
-import createSocket, { setMessageHandler, getQR, getIsConnected, getIsSessionActive } from './socket.js';
+import createSocket, { setMessageHandler, getQR, getIsConnected } from './socket.js';
 import { clearAllAuth } from './services/auth-state.js';
 import makeHandler from './handlers/message.js';
 import chatRoutes from './routes/chat.js';
@@ -38,7 +38,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/qr', async (req, res) => {
-  if (getIsSessionActive()) {
+  if (getIsConnected()) {
     const connected = getIsConnected();
     return res.send(`<!DOCTYPE html>
 <html>

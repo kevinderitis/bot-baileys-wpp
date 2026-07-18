@@ -17,7 +17,6 @@ let sock = null;
 let messageHandler = null;
 let currentQR = null;
 let _isConnected = false;
-let _isSessionActive = false;
 
 async function createSocket() {
   const authStore = config.session.store === 'mongo' && config.mongo.enabled
@@ -71,12 +70,11 @@ async function createSocket() {
 
     if (connection === 'open') {
       _isConnected = true;
-      _isSessionActive = isSessionRegistered();
       if (isSessionRegistered()) {
-        logger.info('=== Bot de WhatsApp conectado y listo ===');
         await saveCredsPromise;
         saveCreds();
       }
+      logger.info('=== Bot de WhatsApp conectado y listo ===');
       return;
     }
 
@@ -119,6 +117,5 @@ function getQR() {
 }
 
 function getIsConnected() { return _isConnected; }
-function getIsSessionActive() { return _isSessionActive; }
 
-export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected, getIsSessionActive };
+export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected };
