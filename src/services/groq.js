@@ -10,14 +10,18 @@ async function createCompletion(messages, options = {}) {
   const temperature = options.temperature ?? config.groq.temperature;
 
   try {
-    const completion = await groq.chat.completions.create({
+    const body = {
       messages,
       model,
       max_tokens: maxTokens,
       temperature,
-    });
+    };
+    if (options.tools) body.tools = options.tools;
+    if (options.tool_choice) body.tool_choice = options.tool_choice;
 
-    return completion.choices[0]?.message?.content || '';
+    const completion = await groq.chat.completions.create(body);
+
+    return completion.choices[0]?.message || { content: '' };
   } catch (err) {
     logger.error({ err, model }, 'Error en Groq API');
     throw err;

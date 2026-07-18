@@ -5,6 +5,21 @@ import { SYSTEM_PROMPT, SUMMARY_PROMPT } from '../utils/prompts.js';
 import config from '../config.js';
 import logger from '../utils/logger.js';
 
+const SAVE_NAME_TOOL = {
+  type: 'function',
+  function: {
+    name: 'saveCustomerName',
+    description: 'Save the customer name after they introduce themselves. Call this when the customer tells you their name.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'The customer first name' },
+      },
+      required: ['name'],
+    },
+  },
+};
+
 class ConversationManager {
   constructor() {
     this.maxContextMessages = config.ai.maxContextMessages;
@@ -12,37 +27,27 @@ class ConversationManager {
     this.keepAfterSummary = config.ai.keepAfterSummary;
   }
 
-  _extractName(text) {
-    const patterns = [
-      /(?:me\s+llamo|mi\s+nombre\s+es|soy)\s+(.+)/i,
-      /(?:this\s+is|i'm|i\s+am|calls?\s+me)\s+(.+)/i,
-    ];
-    for (const p of patterns) {
-      const m = text.match(p);
-      if (m) return m[1].replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').trim().split(/\s+/)[0];
-    }
-    return null;
-  }
-
   async getName(userId) {
     const conv = await Conversation.findOne({ userId }).lean();
     return conv?.name || '';
   }
 
-  async setName(userId, name) {
-    if (!name) return;
-    await Conversation.findOneAndUpdate({ userId }, { $set: { name } });
-    logger.info({ userId, name }, 'Nombre de cliente guardado');
+  async setCustomerInfo(userId, name, phone) {
+    const update = {};
+    if (name) update.name = name;
+    if (phone) update.phone = phone;
+    if (Object.keys(update).length === 0) return;
+    await Conversation.findOneAndUpdate({ userId }, { $set: update });
+    logger.info({ userId, name, phone }, 'Info de cliente guardada');
   }
 
   async saveMessage(userId, role, content) {
     await Message.create({ userId, role, content });
-    const conv = await Conversation.findOneAndUpdate(
+    await Conversation.findOneAndUpdate(
       { userId },
       { $inc: { messageCount: 1 } },
-      { upsert: true, new: true },
+      { upsert: true },
     );
-    return conv;
   }
 
   async getRecentMessages(userId, limit = null) {
@@ -76,7 +81,7 @@ class ConversationManager {
     }
 
     if (conversation?.messageCount === 1 && !conversation.name) {
-      systemParts.push('Es la primera interacción con este cliente. Pregúntale su nombre de forma natural antes de continuar.');
+      systemParts.push('Es la primera interacción con este cliente. Pregúntale su nombre de forma natural. Cuando te lo diga, usa la función saveCustomerName para guardarlo.');
     }
 
     const messages = systemParts.map(content => ({ role: 'system', content }));
@@ -112,13 +117,13 @@ class ConversationManager {
     ];
 
     try {
-      const summary = await createCompletion(summaryMessages, {
+      const result = await createCompletion(summaryMessages, {
         model: config.groq.summaryModel,
         maxTokens: 500,
         temperature: 0.3,
       });
 
-      return summary;
+      return result.content || '';
     } catch (err) {
       logger.error({ err }, 'Error generando resumen');
       return '';
@@ -181,20 +186,35 @@ class ConversationManager {
   }
 
   async chat(userId, userMessage) {
-    const conv = await this.saveMessage(userId, 'user', userMessage);
+    await this.saveMessage(userId, 'user', userMessage);
 
     const { messages, conversation } = await this.buildContext(userId, userMessage);
 
-    const response = await createCompletion(messages);
+    const tools = conversation?.name ? undefined : [SAVE_NAME_TOOL];
+    const result = await createCompletion(messages, { tools, tool_choice: 'auto' });
 
-    await this.saveMessage(userId, 'assistant', response);
-
-    if (!conversation?.name && conv.messageCount >= 2) {
-      const extracted = this._extractName(userMessage);
-      if (extracted) {
-        await this.setName(userId, extracted);
+    if (result.tool_calls) {
+      for (const call of result.tool_calls) {
+        if (call.function.name === 'saveCustomerName') {
+          const args = JSON.parse(call.function.arguments);
+          await this.setCustomerInfo(userId, args.name, userId);
+        }
       }
+      messages.push(result);
+      for (const call of result.tool_calls) {
+        messages.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: 'ok',
+        });
+      }
+      const finalResult = await createCompletion(messages, { tools: [SAVE_NAME_TOOL], tool_choice: 'none' });
+      await this.saveMessage(userId, 'assistant', finalResult.content);
+      return finalResult.content;
     }
+
+    const response = result.content || '';
+    await this.saveMessage(userId, 'assistant', response);
 
     if (await this.shouldSummarize(userId)) {
       logger.info({ userId }, 'Generando resumen automático...');
