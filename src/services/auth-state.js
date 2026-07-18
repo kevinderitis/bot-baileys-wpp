@@ -88,6 +88,7 @@ async function useMongoDBAuthState() {
   const saveCreds = async () => {
     const p = (async () => {
       await saveCredsPromise;
+      logger.info('Guardando credenciales...');
       await write(`${KEY_PREFIX}creds`, creds);
     })();
     saveCredsPromise = p;
@@ -106,4 +107,8 @@ async function clearAllAuth() {
   await Auth.deleteMany({ _id: new RegExp(`^${KEY_PREFIX}`) });
 }
 
-export { useMongoDBAuthState, saveCredsPromise, clearAllAuth };
+function isSessionRegistered() {
+  return cachedState?.state?.creds?.registered === true;
+}
+
+export { useMongoDBAuthState, saveCredsPromise, clearAllAuth, isSessionRegistered };

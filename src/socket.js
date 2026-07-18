@@ -9,13 +9,15 @@ import NodeCache from 'node-cache';
 import qrcode from 'qrcode-terminal';
 import config from './config.js';
 import logger from './utils/logger.js';
-import { useMongoDBAuthState, saveCredsPromise, clearAllAuth } from './services/auth-state.js';
+import { useMongoDBAuthState, saveCredsPromise, clearAllAuth, isSessionRegistered } from './services/auth-state.js';
 
 const msgRetryCache = new NodeCache({ stdTTL: 300 });
 
 let sock = null;
 let messageHandler = null;
 let currentQR = null;
+let _isConnected = false;
+let _isSessionActive = false;
 
 async function createSocket() {
   const authStore = config.session.store === 'mongo' && config.mongo.enabled
@@ -54,9 +56,11 @@ async function createSocket() {
   sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
       currentQR = qr;
-      qrcode.generate(qr, { small: true });
-      logger.info('Escanea el código QR con WhatsApp');
-      logger.info('O visita /qr en el navegador para escanear');
+      if (!isSessionRegistered()) {
+        qrcode.generate(qr, { small: true });
+        logger.info('Escanea el código QR con WhatsApp');
+        logger.info('O visita /qr en el navegador para escanear');
+      }
       return;
     }
 
@@ -66,11 +70,18 @@ async function createSocket() {
     }
 
     if (connection === 'open') {
-      logger.info('=== Bot de WhatsApp conectado y listo ===');
+      _isConnected = true;
+      _isSessionActive = isSessionRegistered();
+      if (isSessionRegistered()) {
+        logger.info('=== Bot de WhatsApp conectado y listo ===');
+        await saveCredsPromise;
+        saveCreds();
+      }
       return;
     }
 
     if (connection === 'close') {
+      _isConnected = false;
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
@@ -107,4 +118,7 @@ function getQR() {
   return currentQR;
 }
 
-export { createSocket as default, setMessageHandler, getSocket, getQR };
+function getIsConnected() { return _isConnected; }
+function getIsSessionActive() { return _isSessionActive; }
+
+export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected, getIsSessionActive };
