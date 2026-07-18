@@ -12,13 +12,37 @@ class ConversationManager {
     this.keepAfterSummary = config.ai.keepAfterSummary;
   }
 
+  _extractName(text) {
+    const patterns = [
+      /(?:me\s+llamo|mi\s+nombre\s+es|soy)\s+(.+)/i,
+      /(?:this\s+is|i'm|i\s+am|calls?\s+me)\s+(.+)/i,
+    ];
+    for (const p of patterns) {
+      const m = text.match(p);
+      if (m) return m[1].replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').trim().split(/\s+/)[0];
+    }
+    return null;
+  }
+
+  async getName(userId) {
+    const conv = await Conversation.findOne({ userId }).lean();
+    return conv?.name || '';
+  }
+
+  async setName(userId, name) {
+    if (!name) return;
+    await Conversation.findOneAndUpdate({ userId }, { $set: { name } });
+    logger.info({ userId, name }, 'Nombre de cliente guardado');
+  }
+
   async saveMessage(userId, role, content) {
     await Message.create({ userId, role, content });
-    await Conversation.findOneAndUpdate(
+    const conv = await Conversation.findOneAndUpdate(
       { userId },
       { $inc: { messageCount: 1 } },
-      { upsert: true },
+      { upsert: true, new: true },
     );
+    return conv;
   }
 
   async getRecentMessages(userId, limit = null) {
@@ -41,14 +65,21 @@ class ConversationManager {
     const conversation = await this.getConversation(userId);
     const recentMessages = await this.getRecentMessages(userId);
 
-    const messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+    const systemParts = [SYSTEM_PROMPT];
+
+    if (conversation?.name) {
+      systemParts.push(`Estás hablando con ${conversation.name}. Dirígete a él/ella por su nombre.`);
+    }
 
     if (conversation?.summary) {
-      messages.push({
-        role: 'system',
-        content: `Resumen de la conversación hasta ahora:\n${conversation.summary}`,
-      });
+      systemParts.push(`Resumen de la conversación hasta ahora:\n${conversation.summary}`);
     }
+
+    if (conversation?.messageCount === 1 && !conversation.name) {
+      systemParts.push('Es la primera interacción con este cliente. Pregúntale su nombre de forma natural antes de continuar.');
+    }
+
+    const messages = systemParts.map(content => ({ role: 'system', content }));
 
     const reversed = recentMessages.reverse();
     for (const msg of reversed) {
@@ -59,7 +90,7 @@ class ConversationManager {
 
     messages.push({ role: 'user', content: currentMessage });
 
-    return messages;
+    return { messages, conversation };
   }
 
   async generateSummary(userId) {
@@ -150,13 +181,20 @@ class ConversationManager {
   }
 
   async chat(userId, userMessage) {
-    await this.saveMessage(userId, 'user', userMessage);
+    const conv = await this.saveMessage(userId, 'user', userMessage);
 
-    const context = await this.buildContext(userId, userMessage);
+    const { messages, conversation } = await this.buildContext(userId, userMessage);
 
-    const response = await createCompletion(context);
+    const response = await createCompletion(messages);
 
     await this.saveMessage(userId, 'assistant', response);
+
+    if (!conversation?.name && conv.messageCount >= 2) {
+      const extracted = this._extractName(userMessage);
+      if (extracted) {
+        await this.setName(userId, extracted);
+      }
+    }
 
     if (await this.shouldSummarize(userId)) {
       logger.info({ userId }, 'Generando resumen automático...');

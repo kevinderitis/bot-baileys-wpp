@@ -6,6 +6,7 @@ const conversationSchema = new mongoose.Schema({
   summaryModel: { type: String, default: '' },
   lastSummaryAt: { type: Date },
   messageCount: { type: Number, default: 0 },
+  name: { type: String, default: '' },
 }, { timestamps: true });
 
 const Conversation = mongoose.model('Conversation', conversationSchema);
