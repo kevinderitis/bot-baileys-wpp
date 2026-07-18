@@ -4,7 +4,7 @@ import { simulateTyping } from '../utils/typing.js';
 import { pickResponse } from '../responses/example.js';
 import ConversationManager from '../services/ConversationManager.js';
 import config from '../config.js';
-import { getSocket } from '../socket.js';
+import { getSocket, getRealPhone } from '../socket.js';
 
 const cm = (config.groq.enabled && config.mongo.enabled) ? new ConversationManager() : null;
 
@@ -62,7 +62,8 @@ async function processWithGroq(userId, combinedBody, remoteJid) {
   if (!sock) return;
 
   const delay = getRandomDelay();
-  const groqPromise = cm.chat(userId, combinedBody, remoteJid);
+  const phone = getRealPhone(remoteJid);
+  const groqPromise = cm.chat(userId, combinedBody, phone);
 
   logger.info({ delayMs: Math.round(delay) }, 'Esperando antes de responder...');
   await new Promise(r => setTimeout(r, delay));

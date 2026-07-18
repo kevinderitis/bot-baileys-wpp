@@ -17,6 +17,7 @@ let sock = null;
 let messageHandler = null;
 let currentQR = null;
 let _isConnected = false;
+const phoneMap = new Map();
 
 async function createSocket() {
   const authStore = config.session.store === 'mongo' && config.mongo.enabled
@@ -51,6 +52,19 @@ async function createSocket() {
   if (messageHandler) {
     sock.ev.on('messages.upsert', messageHandler);
   }
+
+  sock.ev.on('contacts.upsert', async (contacts) => {
+    for (const c of contacts) {
+      if (c.phone) {
+        phoneMap.set(c.id, c.phone);
+        try {
+          const { default: Conversation } = await import('./models/Conversation.js');
+          const userId = c.id.replace(/@.*$/, '');
+          await Conversation.findOneAndUpdate({ userId }, { $set: { phone: c.phone } });
+        } catch {}
+      }
+    }
+  });
 
   sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
     if (qr) {
@@ -118,4 +132,13 @@ function getQR() {
 
 function getIsConnected() { return _isConnected; }
 
-export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected };
+function getPhone(jid) { return phoneMap.get(jid) || ''; }
+
+function getRealPhone(remoteJid) {
+  const fromStore = phoneMap.get(remoteJid);
+  if (fromStore) return fromStore;
+  const m = remoteJid.match(/^(\d+)@s\.whatsapp\.net$/);
+  return m ? m[1] : remoteJid.replace(/@.*$/, '');
+}
+
+export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected, getPhone, getRealPhone };
