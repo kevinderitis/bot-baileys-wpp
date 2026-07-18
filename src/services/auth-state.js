@@ -50,9 +50,9 @@ async function useMongoDBAuthState() {
 
   let creds = await read(`${KEY_PREFIX}creds`);
   if (creds) {
-    logger.info({ registered: creds.registered, hasMe: !!creds.me }, 'Credenciales cargadas desde MongoDB');
+    logger.info({ registered: creds.registered, hasMe: !!creds.me, valid: !!creds.me }, 'Credenciales cargadas desde MongoDB');
   }
-  if (!creds || !creds.registered) {
+  if (!creds || !creds.me) {
     logger.warn('No hay credenciales válidas, generando nuevas...');
     await Auth.deleteMany({ _id: new RegExp(`^${KEY_PREFIX}`) });
     creds = initAuthCreds();
@@ -108,7 +108,7 @@ async function clearAllAuth() {
 }
 
 function isSessionRegistered() {
-  return cachedState?.state?.creds?.registered === true;
+  return cachedState?.state?.creds?.me != null;
 }
 
 export { useMongoDBAuthState, saveCredsPromise, clearAllAuth, isSessionRegistered };
