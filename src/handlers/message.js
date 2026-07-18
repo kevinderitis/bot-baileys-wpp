@@ -57,7 +57,7 @@ function buildRuleResponse(intent) {
   return pickResponse(intent);
 }
 
-async function processWithGroq(userId, combinedBody, quotedMsg, remoteJid) {
+async function processWithGroq(userId, combinedBody, remoteJid) {
   const sock = getSocket();
   if (!sock) return;
 
@@ -78,7 +78,7 @@ async function processWithGroq(userId, combinedBody, quotedMsg, remoteJid) {
 
   try {
     await simulateTyping(sock, remoteJid, response);
-    await sock.sendMessage(remoteJid, { text: response }, { quoted: quotedMsg });
+    await sock.sendMessage(remoteJid, { text: response });
     logger.info({ userId, response: response.slice(0, 80) }, 'MENSAJE SALIENTE (Groq)');
   } catch (err) {
     logger.error({ err }, 'Error enviando mensaje (socket cerrado)');
@@ -96,7 +96,6 @@ async function drainBuffer(userId, remoteJid) {
 
   const bodies = buffered.map(b => b.body);
   const combinedBody = bodies.join('\n');
-  const lastMsg = buffered[buffered.length - 1].msg;
 
   try {
     await sock.readMessages(buffered.map(b => b.msg.key));
@@ -104,7 +103,7 @@ async function drainBuffer(userId, remoteJid) {
     logger.error({ err }, 'Error marcando como leídos');
   }
 
-  const promise = processWithGroq(userId, combinedBody, lastMsg, remoteJid);
+  const promise = processWithGroq(userId, combinedBody, remoteJid);
   pendingQueries.set(userId, promise);
   try {
     await promise;
@@ -144,7 +143,7 @@ function makeHandler() {
       }
 
       if (cm) {
-        const promise = processWithGroq(number, body, msg, remoteJid);
+        const promise = processWithGroq(number, body, remoteJid);
         pendingQueries.set(number, promise);
         try {
           await promise;
@@ -162,7 +161,7 @@ function makeHandler() {
 
         try {
           await simulateTyping(sock, remoteJid, response);
-          await sock.sendMessage(remoteJid, { text: response }, { quoted: msg });
+          await sock.sendMessage(remoteJid, { text: response });
           logger.info({ number, intent, response: response.slice(0, 80) }, 'MENSAJE SALIENTE');
         } catch (err) {
           logger.error({ err }, 'Error enviando mensaje (socket cerrado)');
