@@ -1,14 +1,21 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import QR from 'qrcode';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import createSocket, { setMessageHandler, getQR, getIsConnected } from './socket.js';
 import { clearAllAuth } from './services/auth-state.js';
 import makeHandler from './handlers/message.js';
 import chatRoutes from './routes/chat.js';
+import createAdminRoutes from './routes/admin.js';
+import Scheduler from './services/Scheduler.js';
 import config from './config.js';
 import logger from './utils/logger.js';
 
 logger.info('Iniciando Bot de WhatsApp con Baileys...');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 if (config.mongo.enabled) {
   try {
@@ -30,8 +37,16 @@ if (config.groq.enabled && config.mongo.enabled) {
 }
 
 const app = express();
-app.use(express.json());
+const scheduler = new Scheduler();
+
+app.use(express.json({ limit: '1mb' }));
 app.use('/api', chatRoutes);
+app.use('/api/admin', createAdminRoutes(scheduler));
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
+});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', mongodb: mongoose.connection.readyState === 1, groq: config.groq.enabled });
@@ -110,3 +125,4 @@ app.listen(config.server.port, () => {
 const sock = await createSocket();
 const handler = makeHandler();
 setMessageHandler(handler);
+await scheduler.start();

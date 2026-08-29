@@ -15,6 +15,10 @@ export default {
     port: parseInt(process.env.PORT, 10) || 3000,
   },
 
+  admin: {
+    token: process.env.ADMIN_TOKEN || '',
+  },
+
   groq: {
     apiKey: process.env.GROQ_API_KEY || '',
     enabled: !!process.env.GROQ_API_KEY,

@@ -13,6 +13,9 @@ sessions/
 logs/
 *.log
 
+# Programaciones locales
+data/schedules.json
+
 # OS
 .DS_Store
 Thumbs.db

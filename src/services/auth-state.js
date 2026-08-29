@@ -1,6 +1,8 @@
 import { initAuthCreds } from '@whiskeysockets/baileys';
 import mongoose from 'mongoose';
+import fs from 'node:fs/promises';
 import Auth from '../models/Auth.js';
+import config from '../config.js';
 import logger from '../utils/logger.js';
 
 const KEY_PREFIX = 'baileys:';
@@ -105,6 +107,7 @@ async function useMongoDBAuthState() {
 async function clearAllAuth() {
   cachedState = null;
   await Auth.deleteMany({ _id: new RegExp(`^${KEY_PREFIX}`) });
+  await fs.rm(config.session.path, { recursive: true, force: true });
 }
 
 function isSessionRegistered() {
