@@ -9,7 +9,7 @@ import logger from '../utils/logger.js';
 const router = express.Router();
 const JWT_SECRET = config.admin?.jwtSecret || 'super-secret-change-me';
 const ADMIN_USER = config.admin?.username || 'admin';
-const ADMIN_PASS_HASH = config.admin?.passwordHash || '$2a$10$xVqJZQq8Qq8Qq8Qq8Qq8QO';
+const ADMIN_PASS_HASH = config.admin?.passwordHash || '$2b$10$zCaoUg/FafR5i/y4OqFvVu8XVMQy5LgtgZ/N56PWYc0KCkbeaeYLu';
 
 function authMiddleware(req, res, next) {
   const token = req.cookies?.token;
