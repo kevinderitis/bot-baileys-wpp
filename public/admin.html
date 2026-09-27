@@ -1,705 +1,571 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel Admin - WhatsApp Bot</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - WhatsApp Bot</title>
   <style>
-    :root {
-      color-scheme: light;
-      --bg: #eef2f6;
-      --panel: #ffffff;
-      --text: #17202a;
-      --muted: #64748b;
-      --line: #d8dee6;
-      --soft: #f8fafc;
-      --accent: #128c7e;
-      --accent-dark: #0c6f64;
-      --danger: #c2410c;
-      --success: #15803d;
-      --warning: #b7791f;
-      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
+    .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .login-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+    .login-card h2 { margin-bottom: 1.5rem; color: #333; text-align: center; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #444; }
+    input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+    button { width: 100%; padding: 0.75rem; background: #2196F3; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 500; }
+    button:hover { background: #1976D2; }
+    .error { color: #e53935; margin-top: 1rem; text-align: center; }
+    .hidden { display: none !important; }
 
-    * { box-sizing: border-box; }
+    /* Dashboard */
+    .header { background: white; padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 1.25rem; color: #333; }
+    .user-info { display: flex; align-items: center; gap: 1rem; }
+    .logout-btn { padding: 0.5rem 1rem; background: #e53935; color: white; border: none; border-radius: 4px; cursor: pointer; width: auto; }
+    .logout-btn:hover { background: #c62828; }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .tab { padding: 0.75rem 1.5rem; background: white; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .tab.active { background: #2196F3; color: white; border-color: #2196F3; }
+    .tab:hover:not(.active) { background: #f5f5f5; }
 
-    header {
-      background: #111827;
-      color: white;
-      border-bottom: 4px solid var(--accent);
-    }
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.2s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .header-inner {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 18px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+    .card-header { padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .card-header h2 { font-size: 1.1rem; color: #333; }
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+    .btn-primary { background: #2196F3; color: white; }
+    .btn-primary:hover { background: #1976D2; }
+    .btn-danger { background: #e53935; color: white; }
+    .btn-danger:hover { background: #c62828; }
+    .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+    .btn-secondary:hover { background: #f5f5f5; }
+    .btn-small { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
 
-    h1, h2 {
-      margin: 0;
-      letter-spacing: 0;
-    }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+    .table th { background: #fafafa; font-weight: 600; color: #555; font-size: 0.85rem; text-transform: uppercase; }
+    .table tr:hover { background: #fafafa; }
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+    .badge-success { background: #e8f5e9; color: #2e7d32; }
+    .badge-warning { background: #fff3e0; color: #e65100; }
+    .badge-danger { background: #fbe9e7; color: #c62828; }
+    .badge-info { background: #e3f2fd; color: #1565c0; }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 750;
-    }
-
-    h2 {
-      font-size: 17px;
-    }
-
-    main {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 24px;
-      display: grid;
-      gap: 20px;
-      grid-template-columns: minmax(330px, 430px) minmax(0, 1fr);
-      align-items: start;
-    }
-
-    section {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .section-title {
-      padding: 18px;
-      border-bottom: 1px solid var(--line);
-      background: var(--soft);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    form {
-      padding: 18px;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 650;
-      margin-bottom: 7px;
-    }
-
-    input, textarea, select, button {
-      font: inherit;
-    }
-
-    input, textarea, select {
-      display: block;
-      width: 100%;
-      min-width: 0;
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      color: var(--text);
-      background: white;
-      padding: 10px 11px;
-      outline: none;
-    }
-
-    input[type="datetime-local"],
-    input[type="time"] {
-      max-width: 100%;
-      appearance: auto;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.12);
-    }
-
-    textarea {
-      min-height: 132px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-
-    select {
-      min-height: 160px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 7px;
-      padding: 10px 13px;
-      background: var(--accent);
-      color: white;
-      cursor: pointer;
-      font-weight: 720;
-      white-space: nowrap;
-    }
-
-    button:hover { background: var(--accent-dark); }
-    button:disabled { cursor: not-allowed; opacity: 0.55; }
-
-    .button-secondary { background: #334155; }
-    .button-secondary:hover { background: #1e293b; }
-    .button-danger { background: var(--danger); }
-    .button-danger:hover { background: #9a3412; }
-    .button-ghost { background: transparent; color: #334155; border: 1px solid var(--line); }
-    .button-ghost:hover { background: var(--soft); }
-
-    .field {
-      margin-bottom: 16px;
-      min-width: 0;
-    }
-
-    .field-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .weekly-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 112px;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .date-box {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 12px;
-      background: #fbfdff;
-      min-width: 0;
-    }
-
-    .date-box + .date-box {
-      margin-top: 12px;
-    }
-
-    .weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(38px, 1fr));
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .weekday {
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      padding: 8px 4px;
-      text-align: center;
-      color: var(--text);
-      cursor: pointer;
-      user-select: none;
-      font-size: 13px;
-      font-weight: 720;
-      margin: 0;
-    }
-
-    .weekday input { display: none; }
-
-    .weekday:has(input:checked) {
-      border-color: var(--accent);
-      background: rgba(18, 140, 126, 0.1);
-      color: var(--accent-dark);
-    }
-
-    .actions, .row-actions {
-      display: flex;
-      gap: 9px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .row-actions button {
-      padding: 7px 9px;
-      font-size: 13px;
-    }
-
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      color: #cbd5e1;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--warning);
-    }
-
-    .dot.online { background: #22c55e; }
-    .dot.offline { background: #f59e0b; }
-
-    .message {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 14px;
-      min-height: 20px;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      min-width: 760px;
-    }
-
-    th, td {
-      border-top: 1px solid var(--line);
-      padding: 12px 14px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      background: var(--soft);
-    }
-
-    .message-cell {
-      max-width: 280px;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .badge {
-      display: inline-block;
-      border-radius: 999px;
-      padding: 3px 9px;
-      font-size: 12px;
-      font-weight: 760;
-      background: #e2e8f0;
-      color: #334155;
-      white-space: nowrap;
-    }
-
-    .badge.pending { background: #fef3c7; color: #92400e; }
-    .badge.sending { background: #dbeafe; color: #1d4ed8; }
-    .badge.sent { background: #dcfce7; color: var(--success); }
-    .badge.failed { background: #fee2e2; color: #b91c1c; }
-    .badge.canceled { background: #e5e7eb; color: #4b5563; }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .empty {
-      padding: 22px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    @media (max-width: 920px) {
-      main {
-        grid-template-columns: 1fr;
-        padding: 16px;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .header-inner {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 16px;
-      }
-
-      .weekly-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .weekdays {
-        grid-template-columns: repeat(4, minmax(48px, 1fr));
-      }
-
-      button {
-        width: 100%;
-      }
-
-      .row-actions button {
-        width: auto;
-      }
-    }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .modal.hidden { display: none; }
+    .modal-content { background: white; border-radius: 12px; padding: 2rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h3 { font-size: 1.25rem; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; width: auto; padding: 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .schedule-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+    .day-btn { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem; }
+    .day-btn.active { background: #2196F3; color: white; border-color: #2196F3; }
+    .empty-state { text-align: center; padding: 3rem; color: #888; }
+    .empty-state p { margin-top: 0.5rem; }
+    .actions { display: flex; gap: 0.5rem; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <h1>Panel Admin</h1>
-      <div class="status"><span id="statusDot" class="dot offline"></span><span id="statusText">Conectando...</span></div>
-    </div>
-  </header>
-
-  <main>
-    <section>
-      <div class="section-title">
-        <h2 id="formTitle">Nuevo envio</h2>
-      </div>
-      <form id="scheduleForm">
-        <div class="field" id="tokenField" hidden>
-          <label for="token">Token admin</label>
-          <input id="token" name="token" type="password" autocomplete="current-password">
+  <div class="login-container" id="loginView">
+    <div class="login-card">
+      <h2>Panel de Administración</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" name="username" required autocomplete="username">
         </div>
-
-        <div class="field">
-          <label for="groups">Grupos</label>
-          <select id="groups" name="groups" multiple required></select>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" name="password" required autocomplete="current-password">
         </div>
-
-        <div class="field">
-          <label for="message">Mensaje</label>
-          <textarea id="message" name="message" required>Hola! Como va? Paso por aca para dejarles un aviso rapido.</textarea>
-        </div>
-
-        <div class="field-grid">
-          <div class="date-box">
-            <label for="scheduledAt">Fecha y hora puntual</label>
-            <input id="scheduledAt" name="scheduledAt" type="datetime-local">
-          </div>
-
-          <div class="date-box" id="weeklyBox">
-            <div class="weekly-grid">
-              <div>
-                <label>Proximos dias</label>
-                <div class="weekdays">
-                  <label class="weekday"><input type="checkbox" value="1">Lun</label>
-                  <label class="weekday"><input type="checkbox" value="2">Mar</label>
-                  <label class="weekday"><input type="checkbox" value="3">Mie</label>
-                  <label class="weekday"><input type="checkbox" value="4">Jue</label>
-                  <label class="weekday"><input type="checkbox" value="5">Vie</label>
-                  <label class="weekday"><input type="checkbox" value="6">Sab</label>
-                  <label class="weekday"><input type="checkbox" value="0">Dom</label>
-                </div>
-              </div>
-              <div>
-                <label for="weeklyTime">Hora</label>
-                <input id="weeklyTime" name="weeklyTime" type="time">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="actions" style="margin-top:16px">
-          <button id="submitButton" type="submit">Programar mensajes</button>
-          <button class="button-ghost" type="button" id="cancelEditButton" hidden>Cancelar edicion</button>
-          <button class="button-secondary" type="button" id="refreshButton">Actualizar</button>
-        </div>
-        <div id="formMessage" class="message"></div>
+        <button type="submit">Ingresar</button>
+        <div class="error hidden" id="loginError"></div>
       </form>
-    </section>
+    </div>
+  </div>
 
-    <section>
-      <div class="section-title">
-        <h2>Programaciones</h2>
-        <div class="toolbar">
-          <button class="button-secondary" type="button" id="reloadSchedules">Recargar</button>
+  <div class="hidden" id="dashboardView">
+    <header class="header">
+      <h1>WhatsApp Bot - Admin</h1>
+      <div class="user-info">
+        <span id="currentUser"></span>
+        <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </header>
+    <div class="container">
+      <div class="tabs">
+        <button class="tab active" data-tab="groups">Grupos</button>
+        <button class="tab" data-tab="contacts">Contactos</button>
+        <button class="tab" data-tab="scheduled">Mensajes Programados</button>
+      </div>
+
+      <div class="panel active" id="groupsPanel">
+        <div class="card">
+          <div class="card-header">
+            <h2>Grupos de WhatsApp</h2>
+            <button class="btn btn-secondary" id="refreshGroups">Actualizar</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Nombre</th><th>ID</th><th>Participantes</th><th>Acciones</th></tr></thead>
+            <tbody id="groupsTable"></tbody>
+          </table>
+          <div class="empty-state hidden" id="groupsEmpty"><p>No hay grupos disponibles</p></div>
         </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Estado</th>
-              <th>Grupo</th>
-              <th>Fecha</th>
-              <th>Mensaje</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="schedulesBody"></tbody>
-        </table>
+
+      <div class="panel" id="contactsPanel">
+        <div class="card">
+          <div class="card-header">
+            <h2>Contactos</h2>
+            <button class="btn btn-secondary" id="refreshContacts">Actualizar</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Nombre</th><th>Teléfono</th><th>ID</th><th>Acciones</th></tr></thead>
+            <tbody id="contactsTable"></tbody>
+          </table>
+          <div class="empty-state hidden" id="contactsEmpty"><p>No hay contactos disponibles</p></div>
+        </div>
       </div>
-      <div id="emptyState" class="empty" hidden>No hay mensajes programados.</div>
-    </section>
-  </main>
+
+      <div class="panel" id="scheduledPanel">
+        <div class="card">
+          <div class="card-header">
+            <h2>Mensajes Programados</h2>
+            <button class="btn btn-primary" id="newScheduledBtn">Nuevo mensaje</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Nombre</th><th>Destino</th><th>Horario</th><th>Estado</th><th>Próximo envío</th><th>Acciones</th></tr></thead>
+            <tbody id="scheduledTable"></tbody>
+          </table>
+          <div class="empty-state hidden" id="scheduledEmpty"><p>No hay mensajes programados</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Nuevo mensaje programado</h3>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      <form id="scheduledForm">
+        <input type="hidden" name="id" id="msgId">
+        <div class="form-group">
+          <label>Nombre del mensaje</label>
+          <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+          <label>Mensaje</label>
+          <textarea name="message" rows="4" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Tipo de destino</label>
+          <select name="targetType" id="targetType" required>
+            <option value="group">Grupo</option>
+            <option value="contact">Contacto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Destino</label>
+          <select name="targetId" id="targetId" required>
+            <option value="">Seleccione...</option>
+          </select>
+          <input type="hidden" name="targetName" id="targetName">
+        </div>
+        <div class="form-group">
+          <label>Tipo de horario</label>
+          <select name="scheduleType" id="scheduleType" required>
+            <option value="daily">Diario</option>
+            <option value="weekly">Semanal</option>
+            <option value="custom">Una vez</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Hora</label>
+          <input type="time" name="scheduleTime" id="scheduleTime" required>
+        </div>
+        <div class="form-group" id="weeklyDaysGroup">
+          <label>Días de la semana</label>
+          <div class="schedule-options" id="weeklyDays">
+            <button type="button" class="day-btn" data-day="0">Dom</button>
+            <button type="button" class="day-btn" data-day="1">Lun</button>
+            <button type="button" class="day-btn" data-day="2">Mar</button>
+            <button type="button" class="day-btn" data-day="3">Mié</button>
+            <button type="button" class="day-btn" data-day="4">Jue</button>
+            <button type="button" class="day-btn" data-day="5">Vie</button>
+            <button type="button" class="day-btn" data-day="6">Sáb</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="isActive" id="isActive" checked> Activo
+          </label>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+          <button type="button" class="btn btn-secondary" id="cancelModal" style="flex: 1;">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
-    const state = {
-      token: localStorage.getItem('adminToken') || '',
-      groups: [],
-      schedules: [],
-      editingId: null,
-    };
+    const API = '/api/admin';
+    let currentEditingId = null;
 
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const tokenField = document.getElementById('tokenField');
-    const tokenInput = document.getElementById('token');
-    const groupsSelect = document.getElementById('groups');
-    const form = document.getElementById('scheduleForm');
-    const formTitle = document.getElementById('formTitle');
-    const formMessage = document.getElementById('formMessage');
-    const schedulesBody = document.getElementById('schedulesBody');
-    const emptyState = document.getElementById('emptyState');
-    const submitButton = document.getElementById('submitButton');
-    const cancelEditButton = document.getElementById('cancelEditButton');
-    const weeklyBox = document.getElementById('weeklyBox');
-    const scheduledAtInput = document.getElementById('scheduledAt');
-    const weeklyTimeInput = document.getElementById('weeklyTime');
-    const messageInput = document.getElementById('message');
-
-    tokenInput.value = state.token;
-
-    function headers() {
-      return state.token
-        ? { 'Content-Type': 'application/json', 'x-admin-token': state.token }
-        : { 'Content-Type': 'application/json' };
-    }
-
-    async function request(path, options = {}) {
-      const response = await fetch(path, {
-        ...options,
-        headers: { ...headers(), ...(options.headers || {}) },
-      });
-
-      if (response.status === 401) {
-        tokenField.hidden = false;
-        throw new Error('Ingresa el token admin para continuar.');
-      }
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Error inesperado');
-      return data;
-    }
-
-    function formatDate(value) {
-      return new Intl.DateTimeFormat('es-AR', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      }).format(new Date(value));
-    }
-
-    function toDateTimeLocal(value) {
-      const date = new Date(value);
-      const offset = date.getTimezoneOffset();
-      const local = new Date(date.getTime() - offset * 60000);
-      return local.toISOString().slice(0, 16);
-    }
-
-    function setMessage(text, isError = false) {
-      formMessage.textContent = text;
-      formMessage.style.color = isError ? '#b91c1c' : '#64748b';
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function setEditing(schedule) {
-      state.editingId = schedule.id;
-      formTitle.textContent = 'Editar envio';
-      submitButton.textContent = 'Guardar cambios';
-      cancelEditButton.hidden = false;
-      weeklyBox.hidden = true;
-      messageInput.value = schedule.message;
-      scheduledAtInput.value = toDateTimeLocal(schedule.scheduledAt);
-
-      for (const option of groupsSelect.options) {
-        option.selected = option.value === schedule.groupJid;
-      }
-
-      document.querySelectorAll('.weekday input').forEach(input => { input.checked = false; });
-      weeklyTimeInput.value = '';
-      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setMessage('Editando una programacion existente.');
-    }
-
-    function clearEditing() {
-      state.editingId = null;
-      formTitle.textContent = 'Nuevo envio';
-      submitButton.textContent = 'Programar mensajes';
-      cancelEditButton.hidden = true;
-      weeklyBox.hidden = false;
-      scheduledAtInput.value = '';
-      document.querySelectorAll('.weekday input').forEach(input => { input.checked = false; });
-      weeklyTimeInput.value = '';
-      setMessage('');
-    }
-
-    async function loadStatus() {
+    // Auth
+    async function checkAuth() {
       try {
-        const data = await request('/api/admin/status');
-        statusDot.className = `dot ${data.connected ? 'online' : 'offline'}`;
-        statusText.textContent = data.connected ? 'WhatsApp conectado' : 'WhatsApp no conectado';
-        tokenField.hidden = !data.protected;
-      } catch (err) {
-        statusDot.className = 'dot offline';
-        statusText.textContent = err.message;
+        const res = await fetch(`${API}/me`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          showDashboard(data.username);
+        } else {
+          showLogin();
+        }
+      } catch {
+        showLogin();
       }
+    }
+
+    function showLogin() {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('dashboardView').classList.add('hidden');
+    }
+
+    function showDashboard(username) {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.remove('hidden');
+      document.getElementById('currentUser').textContent = username;
+      loadAll();
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const errorEl = document.getElementById('loginError');
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(Object.fromEntries(new FormData(form)))
+        });
+        if (res.ok) {
+          const data = await res.json();
+          showDashboard(data.username);
+        } else {
+          const err = await res.json();
+          errorEl.textContent = err.error || 'Error de autenticación';
+          errorEl.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorEl.textContent = 'Error de conexión';
+        errorEl.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch(`${API}/logout`, { method: 'POST', credentials: 'include' });
+      showLogin();
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab + 'Panel').classList.add('active');
+      });
+    });
+
+    // Load data
+    async function loadAll() {
+      await Promise.all([loadGroups(), loadContacts(), loadScheduled()]);
     }
 
     async function loadGroups() {
-      const data = await request('/api/admin/groups');
-      const selected = new Set(Array.from(groupsSelect.selectedOptions).map(option => option.value));
-      state.groups = data.groups;
-      groupsSelect.innerHTML = '';
+      try {
+        const res = await fetch(`${API}/groups`, { credentials: 'include' });
+        const { groups } = await res.json();
+        renderGroups(groups);
+      } catch (err) {
+        console.error('Error cargando grupos:', err);
+      }
+    }
 
-      if (data.groups.length === 0) {
-        const option = document.createElement('option');
-        option.textContent = data.connected ? 'No hay grupos disponibles' : 'Conecta WhatsApp para ver grupos';
-        option.disabled = true;
-        groupsSelect.appendChild(option);
+    async function loadContacts() {
+      try {
+        const res = await fetch(`${API}/contacts`, { credentials: 'include' });
+        const { contacts } = await res.json();
+        renderContacts(contacts);
+      } catch (err) {
+        console.error('Error cargando contactos:', err);
+      }
+    }
+
+    async function loadScheduled() {
+      try {
+        const res = await fetch(`${API}/scheduled`, { credentials: 'include' });
+        const { messages } = await res.json();
+        renderScheduled(messages);
+      } catch (err) {
+        console.error('Error cargando programados:', err);
+      }
+    }
+
+    function renderGroups(groups) {
+      const tbody = document.getElementById('groupsTable');
+      const empty = document.getElementById('groupsEmpty');
+      if (!groups.length) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
         return;
       }
-
-      for (const group of data.groups) {
-        const option = document.createElement('option');
-        option.value = group.jid;
-        option.textContent = `${group.name} (${group.participants})`;
-        option.selected = selected.has(group.jid);
-        groupsSelect.appendChild(option);
-      }
+      empty.classList.add('hidden');
+      tbody.innerHTML = groups.map(g => `
+        <tr>
+          <td>${escapeHtml(g.name)}</td>
+          <td><code>${g.id}</code></td>
+          <td>${g.participants}</td>
+          <td>
+            <button class="btn btn-secondary btn-small" onclick="useTarget('group', '${escapeHtml(g.id)}', '${escapeHtml(g.name)}')">Usar</button>
+          </td>
+        </tr>
+      `).join('');
     }
 
-    async function loadSchedules() {
-      const data = await request('/api/admin/schedules');
-      state.schedules = data.schedules;
-      schedulesBody.innerHTML = '';
-      emptyState.hidden = data.schedules.length > 0;
-
-      for (const schedule of data.schedules) {
-        const editable = ['pending', 'failed', 'canceled'].includes(schedule.status);
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td><span class="badge ${schedule.status}">${schedule.status}</span></td>
-          <td>${escapeHtml(schedule.groupName)}</td>
-          <td>${formatDate(schedule.scheduledAt)}</td>
-          <td class="message-cell">${escapeHtml(schedule.message.slice(0, 180))}</td>
-          <td><div class="row-actions"></div></td>
-        `;
-
-        const actions = row.querySelector('.row-actions');
-        if (editable) {
-          const editButton = document.createElement('button');
-          editButton.type = 'button';
-          editButton.className = 'button-ghost';
-          editButton.textContent = 'Editar';
-          editButton.addEventListener('click', () => setEditing(schedule));
-          actions.appendChild(editButton);
-        }
-
-        const deleteButton = document.createElement('button');
-        deleteButton.type = 'button';
-        deleteButton.className = 'button-danger';
-        deleteButton.textContent = 'Eliminar';
-        deleteButton.addEventListener('click', () => deleteSchedule(schedule.id));
-        actions.appendChild(deleteButton);
-
-        schedulesBody.appendChild(row);
+    function renderContacts(contacts) {
+      const tbody = document.getElementById('contactsTable');
+      const empty = document.getElementById('contactsEmpty');
+      if (!contacts.length) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
       }
+      empty.classList.add('hidden');
+      tbody.innerHTML = contacts.map(c => `
+        <tr>
+          <td>${escapeHtml(c.name)}</td>
+          <td>${escapeHtml(c.phone)}</td>
+          <td><code>${c.id}</code></td>
+          <td>
+            <button class="btn btn-secondary btn-small" onclick="useTarget('contact', '${escapeHtml(c.id)}', '${escapeHtml(c.name)}')">Usar</button>
+          </td>
+        </tr>
+      `).join('');
     }
 
-    async function refreshAll() {
-      try {
-        await loadStatus();
-        await loadGroups();
-        await loadSchedules();
-        setMessage('Panel actualizado.');
-      } catch (err) {
-        setMessage(err.message, true);
+    function renderScheduled(messages) {
+      const tbody = document.getElementById('scheduledTable');
+      const empty = document.getElementById('scheduledEmpty');
+      if (!messages.length) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
       }
+      empty.classList.add('hidden');
+      tbody.innerHTML = messages.map(m => `
+        <tr>
+          <td>${escapeHtml(m.name)}</td>
+          <td>${escapeHtml(m.targetName)} <br><small><code>${m.targetId}</code></small></td>
+          <td>
+            <span class="badge badge-info">${m.schedule.type === 'daily' ? 'Diario' : m.schedule.type === 'weekly' ? 'Semanal' : 'Una vez'}</span>
+            ${m.schedule.time}
+            ${m.schedule.type === 'weekly' ? '<br><small>' + m.schedule.daysOfWeek.map(d => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ') + '</small>' : ''}
+          </td>
+          <td><span class="badge ${m.isActive ? 'badge-success' : 'badge-danger'}">${m.isActive ? 'Activo' : 'Inactivo'}</span></td>
+          <td>${m.nextRun ? new Date(m.nextRun).toLocaleString() : '-'}</td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-secondary btn-small" onclick="editScheduled('${m._id}')">Editar</button>
+              <button class="btn btn-secondary btn-small" onclick="testScheduled('${m._id}')">Probar</button>
+              <button class="btn btn-danger btn-small" onclick="deleteScheduled('${m._id}')">Eliminar</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
     }
 
-    async function deleteSchedule(id) {
-      if (!confirm('Eliminar esta programacion?')) return;
-
-      try {
-        await request(`/api/admin/schedules/${id}`, { method: 'DELETE' });
-        if (state.editingId === id) clearEditing();
-        await loadSchedules();
-        setMessage('Programacion eliminada.');
-      } catch (err) {
-        setMessage(err.message, true);
-      }
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      state.token = tokenInput.value.trim();
-      localStorage.setItem('adminToken', state.token);
+    // Modal
+    function openModal(edit = false, data = null) {
+      const modal = document.getElementById('modal');
+      const form = document.getElementById('scheduledForm');
+      form.reset();
+      document.getElementById('weeklyDaysGroup').style.display = 'none';
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+      currentEditingId = null;
 
-      const groupJids = Array.from(groupsSelect.selectedOptions).map(option => option.value);
-      const weekdays = Array.from(document.querySelectorAll('.weekday input:checked')).map(input => Number(input.value));
-      const message = messageInput.value;
-      const scheduledAt = scheduledAtInput.value;
-      const weeklyTime = weeklyTimeInput.value;
+      if (edit && data) {
+        document.getElementById('modalTitle').textContent = 'Editar mensaje programado';
+        currentEditingId = data._id;
+        form.name.value = data.name;
+        form.message.value = data.message;
+        form.targetType.value = data.targetType;
+        form.targetId.value = data.targetId;
+        form.targetName.value = data.targetName;
+        form.scheduleType.value = data.schedule.type;
+        form.scheduleTime.value = data.schedule.time;
+        form.isActive.checked = data.isActive;
 
-      submitButton.disabled = true;
-      setMessage(state.editingId ? 'Guardando cambios...' : 'Creando programaciones...');
-
-      try {
-        if (state.editingId) {
-          const groupJid = groupJids[0];
-          await request(`/api/admin/schedules/${state.editingId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ groupJid, message, scheduledAt }),
+        if (data.schedule.type === 'weekly') {
+          document.getElementById('weeklyDaysGroup').style.display = 'block';
+          data.schedule.daysOfWeek.forEach(d => {
+            const btn = document.querySelector(`.day-btn[data-day="${d}"]`);
+            if (btn) btn.classList.add('active');
           });
-          clearEditing();
-          await loadSchedules();
-          setMessage('Programacion actualizada.');
+        }
+      } else {
+        document.getElementById('modalTitle').textContent = 'Nuevo mensaje programado';
+      }
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      currentEditingId = null;
+    }
+
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('cancelModal').addEventListener('click', closeModal);
+    document.getElementById('newScheduledBtn').addEventListener('click', () => openModal(false));
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('scheduleType').addEventListener('change', (e) => {
+      document.getElementById('weeklyDaysGroup').style.display = e.target.value === 'weekly' ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('.day-btn').forEach(btn => {
+      btn.addEventListener('click', () => btn.classList.toggle('active'));
+    });
+
+    // Target selection
+    function useTarget(type, id, name) {
+      if (!document.getElementById('modal').classList.contains('hidden')) {
+        document.getElementById('targetType').value = type;
+        document.getElementById('targetId').value = id;
+        document.getElementById('targetName').value = name;
+        closeModal();
+      }
+    }
+
+    document.getElementById('targetType').addEventListener('change', async () => {
+      const type = document.getElementById('targetType').value;
+      const select = document.getElementById('targetId');
+      select.innerHTML = '<option value="">Cargando...</option>';
+      try {
+        const res = await fetch(`${API}/${type === 'group' ? 'groups' : 'contacts'}`, { credentials: 'include' });
+        const data = await res.json();
+        const items = data.groups || data.contacts || [];
+        select.innerHTML = items.map(i => `
+          <option value="${i.id}">${i.name} (${i.id})</option>
+        `).join('');
+      } catch (err) {
+        select.innerHTML = '<option value="">Error cargando</option>';
+      }
+    });
+
+    document.getElementById('scheduledForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
+
+      const days = Array.from(document.querySelectorAll('.day-btn.active')).map(b => parseInt(b.dataset.day));
+      const schedule = {
+        type: data.scheduleType,
+        time: data.scheduleTime,
+        timezone: 'America/Argentina/Buenos_Aires',
+      };
+      if (data.scheduleType === 'weekly') schedule.daysOfWeek = days;
+
+      const payload = {
+        name: data.name,
+        message: data.message,
+        targetType: data.targetType,
+        targetId: data.targetId,
+        targetName: data.targetName,
+        schedule,
+        isActive: data.isActive === 'on',
+      };
+
+      const url = currentEditingId ? `${API}/scheduled/${currentEditingId}` : `${API}/scheduled`;
+      const method = currentEditingId ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          closeModal();
+          loadScheduled();
         } else {
-          const data = await request('/api/admin/schedules', {
-            method: 'POST',
-            body: JSON.stringify({ groupJids, message, scheduledAt, weekdays, weeklyTime }),
-          });
-          await loadSchedules();
-          setMessage(`${data.schedules.length} mensaje(s) programado(s).`);
+          const err = await res.json();
+          alert('Error: ' + (err.error || 'Error guardando'));
         }
       } catch (err) {
-        setMessage(err.message, true);
-      } finally {
-        submitButton.disabled = false;
+        alert('Error de conexión');
       }
     });
 
-    document.getElementById('refreshButton').addEventListener('click', refreshAll);
-    document.getElementById('reloadSchedules').addEventListener('click', loadSchedules);
-    cancelEditButton.addEventListener('click', clearEditing);
-    tokenInput.addEventListener('change', () => {
-      state.token = tokenInput.value.trim();
-      localStorage.setItem('adminToken', state.token);
-      refreshAll();
-    });
+    async function editScheduled(id) {
+      try {
+        const res = await fetch(`${API}/scheduled`, { credentials: 'include' });
+        const { messages } = await res.json();
+        const msg = messages.find(m => m._id === id);
+        if (msg) openModal(true, msg);
+      } catch (err) {
+        alert('Error cargando mensaje');
+      }
+    }
 
-    refreshAll();
-    setInterval(loadStatus, 10000);
-    setInterval(loadSchedules, 15000);
+    async function testScheduled(id) {
+      if (!confirm('¿Enviar mensaje de prueba ahora?')) return;
+      try {
+        const res = await fetch(`${API}/scheduled/${id}/test`, { method: 'POST', credentials: 'include' });
+        if (res.ok) alert('Mensaje enviado correctamente');
+        else alert('Error enviando');
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function deleteScheduled(id) {
+      if (!confirm('¿Eliminar este mensaje programado?')) return;
+      try {
+        const res = await fetch(`${API}/scheduled/${id}`, { method: 'DELETE', credentials: 'include' });
+        if (res.ok) loadScheduled();
+        else alert('Error eliminando');
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    document.getElementById('refreshGroups').addEventListener('click', loadGroups);
+    document.getElementById('refreshContacts').addEventListener('click', loadContacts);
+
+    checkAuth();
   </script>
 </body>
 </html>

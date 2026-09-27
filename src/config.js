@@ -16,7 +16,9 @@ export default {
   },
 
   admin: {
-    token: process.env.ADMIN_TOKEN || '',
+    username: process.env.ADMIN_USER || 'admin',
+    passwordHash: process.env.ADMIN_PASS_HASH || '$2a$10$xVqJZQq8Qq8Qq8Qq8Qq8QO',
+    jwtSecret: process.env.ADMIN_JWT_SECRET || 'super-secret-change-me',
   },
 
   groq: {
