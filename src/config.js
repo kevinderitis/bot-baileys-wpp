@@ -17,7 +17,7 @@ export default {
 
   admin: {
     username: process.env.ADMIN_USER || 'admin',
-    passwordHash: process.env.ADMIN_PASS_HASH || '$2a$10$xVqJZQq8Qq8Qq8Qq8Qq8QO',
+    passwordHash: process.env.ADMIN_PASS_HASH || '$2b$10$zCaoUg/FafR5i/y4OqFvVu8XVMQy5LgtgZ/N56PWYc0KCkbeaeYLu',
     jwtSecret: process.env.ADMIN_JWT_SECRET || 'super-secret-change-me',
   },
 
