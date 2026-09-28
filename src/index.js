@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import QR from 'qrcode';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import createSocket, { setMessageHandler, getQR, getIsConnected } from './socket.js';
+import createSocket, { setMessageHandler, getQR, getIsConnected, startBot } from './socket.js';
 import { clearAllAuth } from './services/auth-state.js';
 import makeHandler from './handlers/message.js';
 import chatRoutes from './routes/chat.js';
@@ -126,3 +126,7 @@ app.listen(config.server.port, () => {
 const handler = makeHandler();
 setMessageHandler(handler);
 await scheduler.start();
+
+if (process.env.AUTO_START_BOT === 'true') {
+  startBot();
+}
