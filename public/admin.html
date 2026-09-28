@@ -181,43 +181,25 @@
           <span id="headerStatusText">Disconnected</span>
         </span>
         <a href="/qr" target="_blank" class="btn-success btn-small" id="headerConnectBtn" style="display:none;text-decoration:none">Connect</a>
-        <span id="currentUser"></span>
-        <button class="btn-danger btn-small" id="logoutBtn">Logout</button>
+        <div style="position:relative">
+          <button class="btn-secondary btn-small" id="hamburgerBtn" style="padding:0.4rem 0.6rem">☰</button>
+          <div id="userMenu" style="display:none;position:absolute;right:0;top:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);padding:0.75rem;min-width:160px;z-index:200;margin-top:0.25rem">
+            <div style="padding:0.5rem 0;font-size:0.85rem;font-weight:500" id="currentUser"></div>
+            <hr style="border:none;border-top:1px solid var(--border);margin:0.5rem 0">
+            <button class="btn-danger btn-small" id="logoutBtn" style="width:100%">Logout</button>
+          </div>
+        </div>
       </div>
     </header>
     <div class="container">
       <div class="tabs">
-        <button class="tab active" data-tab="connection">WhatsApp</button>
-        <button class="tab" data-tab="scheduled">Schedules</button>
+        <button class="tab active" data-tab="scheduled">Schedules</button>
         <button class="tab" data-tab="groups">Groups</button>
         <button class="tab" data-tab="contacts">Contacts</button>
         <button class="tab" data-tab="bot">AI Bot</button>
       </div>
 
-      <div class="panel active" id="connectionPanel">
-        <div class="status-card">
-          <div class="status-indicator" id="waStatusIcon">🔴</div>
-          <div class="status-info">
-            <h3 id="waStatusTitle">WhatsApp Not Connected</h3>
-            <p id="waStatusDesc">Click Connect to open QR code</p>
-          </div>
-          <div class="status-actions">
-            <a href="/qr" target="_blank" class="btn-success" id="waConnectBtn" style="text-decoration:none">Connect</a>
-            <button class="btn-danger" id="waDisconnectBtn" style="display:none">Disconnect</button>
-          </div>
-        </div>
-
-        <div class="card" id="qrCard" style="display:none">
-          <div class="card-header"><h2>Connect WhatsApp</h2></div>
-          <div class="card-body" style="text-align:center">
-            <p style="color:var(--text-muted);margin-bottom:1rem">Scan this QR code with WhatsApp to link your account</p>
-            <img id="qrImage" src="" alt="QR Code" style="max-width:280px;width:100%;border-radius:8px;border:1px solid var(--border)">
-            <p style="color:var(--text-muted);margin-top:0.75rem;font-size:0.85rem">WhatsApp → Settings → Linked Devices → Link a Device</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel" id="scheduledPanel">
+      <div class="panel active" id="scheduledPanel">
         <div class="card">
           <div class="card-header">
             <h2>Scheduled Messages</h2>
@@ -484,6 +466,19 @@
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await fetch(`${API}/logout`, { method: 'POST', credentials: 'include' });
       showLogin();
+    });
+
+    document.getElementById('hamburgerBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = document.getElementById('userMenu');
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('userMenu');
+      if (menu && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+      }
     });
 
     document.querySelectorAll('.tab').forEach(btn => {
