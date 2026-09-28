@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
   const valid = await bcrypt.compare(password, ADMIN_PASS_HASH);
   if (!valid) return res.status(401).json({ error: 'Credenciales inválidas' });
   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
-  res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax' });
+  res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax', path: '/' });
   res.json({ ok: true });
 });
 
