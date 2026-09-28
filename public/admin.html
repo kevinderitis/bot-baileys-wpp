@@ -309,14 +309,12 @@
         </div>
 
         <div class="card">
-          <div class="card-header"><h2>Bot Purpose</h2></div>
+          <div class="card-header">
+            <h2>Bot Purpose</h2>
+            <button class="btn-primary btn-small" id="savePurposeBtn">Save</button>
+          </div>
           <div class="card-body">
-            <p style="color:var(--text-muted);line-height:1.6">
-              This bot acts as a <strong>Koderix sales agent</strong>. It automatically responds to WhatsApp messages,
-              engages potential clients, understands their needs, and offers software development services.
-              The bot supports both English and Spanish, uses AI-powered responses via Groq, and maintains
-              conversation context for natural interactions.
-            </p>
+            <textarea id="botPurpose" rows="5" style="width:100%;padding:0.75rem;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;line-height:1.6;resize:vertical" placeholder="Describe the bot's purpose..."></textarea>
           </div>
         </div>
       </div>
@@ -470,7 +468,7 @@
     });
 
     async function loadAll() {
-      await Promise.all([loadBotStatus(), loadGroups(), loadContacts(), loadScheduled()]);
+      await Promise.all([loadBotStatus(), loadBotPurpose(), loadGroups(), loadContacts(), loadScheduled()]);
     }
 
     async function loadBotStatus() {
@@ -558,6 +556,28 @@
           body: JSON.stringify(payload)
         });
         if (res.ok) { showToast('Configuration saved', 'success'); loadBotStatus(); }
+        else showToast('Failed to save', 'error');
+      } catch { showToast('Connection error', 'error'); }
+    });
+
+    async function loadBotPurpose() {
+      try {
+        const res = await fetch(`${API}/bot/purpose`, { credentials: 'include' });
+        const data = await res.json();
+        document.getElementById('botPurpose').value = data.purpose || '';
+      } catch (err) { console.error(err); }
+    }
+
+    document.getElementById('savePurposeBtn').addEventListener('click', async () => {
+      const purpose = document.getElementById('botPurpose').value;
+      try {
+        const res = await fetch(`${API}/bot/purpose`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ purpose })
+        });
+        if (res.ok) showToast('Purpose saved', 'success');
         else showToast('Failed to save', 'error');
       } catch { showToast('Connection error', 'error'); }
     });

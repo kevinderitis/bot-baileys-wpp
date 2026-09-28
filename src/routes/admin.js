@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getSocket, getRealPhone, getIsConnected, startBot, stopBot, isBotEnabled } from '../socket.js';
 import ScheduledMessage from '../models/ScheduledMessage.js';
+import BotSettings from '../models/BotSettings.js';
 import config from '../config.js';
 import logger from '../utils/logger.js';
 
@@ -219,6 +220,21 @@ router.put('/bot/config', authMiddleware, (req, res) => {
     maxContext: config.ai.maxContextMessages,
     summarizeAfter: config.ai.summarizeAfter,
   }});
+});
+
+router.get('/bot/purpose', authMiddleware, async (req, res) => {
+  const setting = await BotSettings.findOne({ key: 'botPurpose' });
+  res.json({ purpose: setting?.value || '' });
+});
+
+router.put('/bot/purpose', authMiddleware, async (req, res) => {
+  const { purpose } = req.body;
+  await BotSettings.findOneAndUpdate(
+    { key: 'botPurpose' },
+    { $set: { value: purpose } },
+    { upsert: true }
+  );
+  res.json({ ok: true });
 });
 
 export default router;
