@@ -177,6 +177,7 @@ router.get('/bot/status', authMiddleware, (req, res) => {
   res.json({
     connected: getIsConnected(),
     enabled: isBotEnabled(),
+    aiEnabled: config.groq.enabled,
     config: {
       model: config.groq.model,
       maxTokens: config.groq.maxTokens,
@@ -188,6 +189,11 @@ router.get('/bot/status', authMiddleware, (req, res) => {
       summarizeAfter: config.ai.summarizeAfter,
     },
   });
+});
+
+router.post('/bot/toggle', authMiddleware, (req, res) => {
+  config.groq.enabled = !config.groq.enabled;
+  res.json({ ok: true, aiEnabled: config.groq.enabled });
 });
 
 router.get('/bot/qr', authMiddleware, async (req, res) => {

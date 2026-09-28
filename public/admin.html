@@ -187,10 +187,34 @@
     </header>
     <div class="container">
       <div class="tabs">
-        <button class="tab active" data-tab="scheduled">Schedules</button>
+        <button class="tab active" data-tab="connection">WhatsApp</button>
+        <button class="tab" data-tab="scheduled">Schedules</button>
         <button class="tab" data-tab="groups">Groups</button>
         <button class="tab" data-tab="contacts">Contacts</button>
-        <button class="tab" data-tab="bot">Bot</button>
+        <button class="tab" data-tab="bot">AI Bot</button>
+      </div>
+
+      <div class="panel active" id="connectionPanel">
+        <div class="status-card">
+          <div class="status-indicator" id="waStatusIcon">🔴</div>
+          <div class="status-info">
+            <h3 id="waStatusTitle">WhatsApp Not Connected</h3>
+            <p id="waStatusDesc">Click Connect to open QR code</p>
+          </div>
+          <div class="status-actions">
+            <a href="/qr" target="_blank" class="btn-success" id="waConnectBtn" style="text-decoration:none">Connect</a>
+            <button class="btn-danger" id="waDisconnectBtn" style="display:none">Disconnect</button>
+          </div>
+        </div>
+
+        <div class="card" id="qrCard" style="display:none">
+          <div class="card-header"><h2>Connect WhatsApp</h2></div>
+          <div class="card-body" style="text-align:center">
+            <p style="color:var(--text-muted);margin-bottom:1rem">Scan this QR code with WhatsApp to link your account</p>
+            <img id="qrImage" src="" alt="QR Code" style="max-width:280px;width:100%;border-radius:8px;border:1px solid var(--border)">
+            <p style="color:var(--text-muted);margin-top:0.75rem;font-size:0.85rem">WhatsApp → Settings → Linked Devices → Link a Device</p>
+          </div>
+        </div>
       </div>
 
       <div class="panel" id="scheduledPanel">
@@ -259,20 +283,19 @@
 
       <div class="panel" id="botPanel">
         <div class="status-card">
-          <div class="status-indicator" id="statusIcon">⏳</div>
+          <div class="status-indicator" id="aiStatusIcon">🔴</div>
           <div class="status-info">
-            <h3 id="statusTitle">Connecting...</h3>
-            <p id="statusDesc">Establishing connection to WhatsApp</p>
+            <h3 id="aiStatusTitle">AI Bot Disabled</h3>
+            <p id="aiStatusDesc">AI responses are turned off</p>
           </div>
           <div class="status-actions">
-            <button class="btn-success" id="startBotBtn">Connect WhatsApp</button>
-            <button class="btn-danger" id="stopBotBtn">Disconnect</button>
+            <button class="btn-success" id="aiToggleBtn">Enable AI Bot</button>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
-            <h2>Bot Configuration</h2>
+            <h2>AI Configuration</h2>
             <button class="btn-primary btn-small" id="saveConfigBtn">Save</button>
           </div>
           <div class="card-body">
@@ -482,49 +505,64 @@
         const res = await fetch(`${API}/bot/status`, { credentials: 'include' });
         const data = await res.json();
         updateBotUI(data);
+        updateConnectionUI(data);
       } catch (err) { console.error(err); }
     }
 
-    function updateBotUI(data) {
-      const icon = document.getElementById('statusIcon');
-      const title = document.getElementById('statusTitle');
-      const desc = document.getElementById('statusDesc');
-      const startBtn = document.getElementById('startBotBtn');
-      const stopBtn = document.getElementById('stopBotBtn');
+    function updateConnectionUI(data) {
+      const icon = document.getElementById('waStatusIcon');
+      const title = document.getElementById('waStatusTitle');
+      const desc = document.getElementById('waStatusDesc');
+      const connectBtn = document.getElementById('waConnectBtn');
+      const disconnectBtn = document.getElementById('waDisconnectBtn');
+      const qrCard = document.getElementById('qrCard');
       const headerDot = document.getElementById('headerStatusDot');
       const headerText = document.getElementById('headerStatusText');
       const headerConnect = document.getElementById('headerConnectBtn');
 
       if (data.connected) {
         icon.textContent = '🟢';
-        icon.className = 'status-indicator online';
-        title.textContent = 'Bot Online';
-        desc.textContent = 'Connected and ready to receive messages';
-        startBtn.classList.add('hidden');
-        stopBtn.classList.remove('hidden');
+        title.textContent = 'WhatsApp Connected';
+        desc.textContent = 'Ready to send and receive messages';
+        connectBtn.style.display = 'none';
+        disconnectBtn.style.display = 'inline-block';
+        qrCard.style.display = 'none';
         headerDot.style.background = 'var(--success)';
         headerText.textContent = 'Connected';
         headerConnect.style.display = 'none';
-      } else if (data.enabled) {
-        icon.textContent = '🟡';
-        icon.className = 'status-indicator offline';
-        title.textContent = 'Connecting...';
-        desc.textContent = 'Opening QR code page...';
-        startBtn.classList.add('hidden');
-        stopBtn.classList.remove('hidden');
-        headerDot.style.background = 'var(--warning)';
-        headerText.textContent = 'Connecting...';
-        headerConnect.style.display = 'none';
       } else {
         icon.textContent = '🔴';
-        icon.className = 'status-indicator offline';
         title.textContent = 'WhatsApp Not Connected';
         desc.textContent = 'Click Connect to open QR code';
-        startBtn.classList.remove('hidden');
-        stopBtn.classList.add('hidden');
+        connectBtn.style.display = 'inline-block';
+        disconnectBtn.style.display = 'none';
+        qrCard.style.display = 'none';
         headerDot.style.background = 'var(--danger)';
         headerText.textContent = 'Disconnected';
         headerConnect.style.display = 'inline-block';
+      }
+    }
+
+    function updateBotUI(data) {
+      const icon = document.getElementById('aiStatusIcon');
+      const title = document.getElementById('aiStatusTitle');
+      const desc = document.getElementById('aiStatusDesc');
+      const toggleBtn = document.getElementById('aiToggleBtn');
+
+      if (data.aiEnabled) {
+        icon.textContent = '🟢';
+        icon.className = 'status-indicator online';
+        title.textContent = 'AI Bot Enabled';
+        desc.textContent = 'AI responses are active';
+        toggleBtn.textContent = 'Disable AI Bot';
+        toggleBtn.className = 'btn-danger';
+      } else {
+        icon.textContent = '🔴';
+        icon.className = 'status-indicator offline';
+        title.textContent = 'AI Bot Disabled';
+        desc.textContent = 'AI responses are turned off';
+        toggleBtn.textContent = 'Enable AI Bot';
+        toggleBtn.className = 'btn-success';
       }
 
       if (data.config) {
@@ -539,19 +577,19 @@
       }
     }
 
-    document.getElementById('startBotBtn').addEventListener('click', async () => {
+    document.getElementById('aiToggleBtn').addEventListener('click', async () => {
       try {
-        await fetch(`${API}/bot/start`, { method: 'POST', credentials: 'include' });
-        window.open('/qr', '_blank');
-        showToast('Opening QR code...', 'success');
+        const res = await fetch(`${API}/bot/toggle`, { method: 'POST', credentials: 'include' });
+        if (res.ok) { showToast('AI Bot toggled', 'success'); loadBotStatus(); }
+        else showToast('Failed to toggle', 'error');
       } catch { showToast('Connection error', 'error'); }
     });
 
-    document.getElementById('stopBotBtn').addEventListener('click', async () => {
+    document.getElementById('waDisconnectBtn').addEventListener('click', async () => {
       try {
         const res = await fetch(`${API}/bot/stop`, { method: 'POST', credentials: 'include' });
-        if (res.ok) { showToast('Bot stopped', 'success'); loadBotStatus(); }
-        else showToast('Failed to stop bot', 'error');
+        if (res.ok) { showToast('WhatsApp disconnected', 'success'); loadBotStatus(); }
+        else showToast('Failed to disconnect', 'error');
       } catch { showToast('Connection error', 'error'); }
     });
 

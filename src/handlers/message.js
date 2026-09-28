@@ -143,7 +143,7 @@ function makeHandler() {
         logger.error({ err }, 'Error marcando como leído');
       }
 
-      if (cm) {
+      if (cm && config.groq.enabled) {
         const promise = processWithGroq(number, body, remoteJid);
         pendingQueries.set(number, promise);
         try {
