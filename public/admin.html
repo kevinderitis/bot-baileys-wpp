@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,17 +18,17 @@
       --text-muted: #64748b;
       --border: #e2e8f0;
       --radius: 12px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
     }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); }
 
     .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
     .login-card { background: var(--card); padding: 2.5rem; border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; max-width: 400px; }
-    .login-card h2 { margin-bottom: 0.5rem; color: var(--text); text-align: center; font-size: 1.5rem; }
+    .login-card h2 { margin-bottom: 0.5rem; text-align: center; font-size: 1.5rem; }
     .login-card .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
     .form-group { margin-bottom: 1.25rem; }
-    label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text); font-size: 0.9rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
     input, select, textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; background: var(--card); color: var(--text); }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
     textarea { resize: vertical; min-height: 80px; }
@@ -41,11 +41,13 @@
     .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover { background: var(--bg); }
     .btn-small { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
     .error { color: var(--danger); margin-top: 1rem; text-align: center; font-size: 0.9rem; }
     .hidden { display: none !important; }
 
     .header { background: var(--card); padding: 1rem 1.5rem; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-    .header h1 { font-size: 1.1rem; color: var(--text); }
+    .header h1 { font-size: 1.1rem; }
     .header-right { display: flex; align-items: center; gap: 0.75rem; }
     .header-right span { color: var(--text-muted); font-size: 0.85rem; }
 
@@ -59,9 +61,10 @@
     .panel.active { display: block; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem; }
     .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
-    .card-header h2 { font-size: 1rem; color: var(--text); font-weight: 600; }
+    .card-header h2 { font-size: 1rem; font-weight: 600; }
+    .card-body { padding: 1.5rem; }
 
     .table-wrap { overflow-x: auto; }
     .table { width: 100%; border-collapse: collapse; min-width: 600px; }
@@ -107,6 +110,20 @@
     .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 400; }
     .checkbox-label input { width: auto; }
 
+    .status-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .status-indicator { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .status-indicator.online { background: #d1fae5; }
+    .status-indicator.offline { background: #fee2e2; }
+    .status-info { flex: 1; min-width: 200px; }
+    .status-info h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+    .status-info p { color: var(--text-muted); font-size: 0.9rem; }
+    .status-actions { display: flex; gap: 0.75rem; }
+
+    .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .config-item { background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+    .config-item label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .config-item .value { font-size: 1.1rem; font-weight: 600; }
+
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: white; padding: 0.75rem 1.25rem; border-radius: 8px; font-size: 0.85rem; z-index: 2000; animation: slideUp 0.3s ease; box-shadow: var(--shadow-lg); }
     .toast.success { background: var(--success); }
     .toast.error { background: var(--danger); }
@@ -126,6 +143,8 @@
       .table { min-width: 500px; }
       .actions { flex-direction: column; }
       .actions .btn { width: 100%; text-align: center; }
+      .status-card { flex-direction: column; text-align: center; }
+      .status-actions { width: 100%; justify-content: center; }
     }
     @media (max-width: 480px) {
       .schedule-options { grid-template-columns: repeat(3, 1fr); }
@@ -137,17 +156,17 @@
   <div class="login-container" id="loginView">
     <div class="login-card">
       <h2>Admin Panel</h2>
-      <p class="subtitle">WhatsApp Bot - Panel de control</p>
+      <p class="subtitle">WhatsApp Bot Management</p>
       <form id="loginForm">
         <div class="form-group">
-          <label>Usuario</label>
+          <label>Username</label>
           <input type="text" name="username" required autocomplete="username">
         </div>
         <div class="form-group">
-          <label>Contraseña</label>
+          <label>Password</label>
           <input type="password" name="password" required autocomplete="current-password">
         </div>
-        <button type="submit" class="btn-primary btn-full">Ingresar</button>
+        <button type="submit" class="btn-primary btn-full">Sign In</button>
         <div class="error hidden" id="loginError"></div>
       </form>
     </div>
@@ -158,61 +177,131 @@
       <h1>WhatsApp Bot</h1>
       <div class="header-right">
         <span id="currentUser"></span>
-        <button class="btn-danger btn-small" id="logoutBtn">Salir</button>
+        <button class="btn-danger btn-small" id="logoutBtn">Logout</button>
       </div>
     </header>
     <div class="container">
       <div class="tabs">
-        <button class="tab active" data-tab="groups">Grupos</button>
-        <button class="tab" data-tab="contacts">Contactos</button>
-        <button class="tab" data-tab="scheduled">Programados</button>
+        <button class="tab active" data-tab="groups">Groups</button>
+        <button class="tab" data-tab="contacts">Contacts</button>
+        <button class="tab" data-tab="scheduled">Schedules</button>
+        <button class="tab" data-tab="bot">Bot</button>
       </div>
 
-      <div class="panel active" id="groupsPanel">
+      <div class="panel" id="groupsPanel">
         <div class="card">
           <div class="card-header">
-            <h2>Grupos de WhatsApp</h2>
-            <button class="btn-secondary btn-small" id="refreshGroups">Actualizar</button>
+            <h2>WhatsApp Groups</h2>
+            <button class="btn-secondary btn-small" id="refreshGroups">Refresh</button>
           </div>
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Nombre</th><th>ID</th><th>Participantes</th><th></th></tr></thead>
+              <thead><tr><th>Name</th><th>ID</th><th>Members</th><th></th></tr></thead>
               <tbody id="groupsTable"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="groupsEmpty"><div class="icon">📋</div><p>No hay grupos disponibles</p></div>
+          <div class="empty-state hidden" id="groupsEmpty"><div class="icon">📋</div><p>No groups available</p></div>
         </div>
       </div>
 
       <div class="panel" id="contactsPanel">
         <div class="card">
           <div class="card-header">
-            <h2>Contactos</h2>
-            <button class="btn-secondary btn-small" id="refreshContacts">Actualizar</button>
+            <h2>Contacts</h2>
+            <button class="btn-secondary btn-small" id="refreshContacts">Refresh</button>
           </div>
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Nombre</th><th>Teléfono</th><th>ID</th><th></th></tr></thead>
+              <thead><tr><th>Name</th><th>Phone</th><th>ID</th><th></th></tr></thead>
               <tbody id="contactsTable"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="contactsEmpty"><div class="icon">👤</div><p>No hay contactos disponibles</p></div>
+          <div class="empty-state hidden" id="contactsEmpty"><div class="icon">👤</div><p>No contacts available</p></div>
         </div>
       </div>
 
       <div class="panel" id="scheduledPanel">
         <div class="card">
           <div class="card-header">
-            <h2>Mensajes Programados</h2>
-            <button class="btn-primary btn-small" id="newScheduledBtn">+ Nuevo</button>
+            <h2>Scheduled Messages</h2>
+            <button class="btn-primary btn-small" id="newScheduledBtn">+ New</button>
           </div>
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Nombre</th><th>Destino</th><th>Horario</th><th>Estado</th><th>Próximo</th><th></th></tr></thead>
+              <thead><tr><th>Name</th><th>Target</th><th>Schedule</th><th>Status</th><th>Next Run</th><th></th></tr></thead>
               <tbody id="scheduledTable"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="scheduledEmpty"><div class="icon">📅</div><p>No hay mensajes programados</p></div>
+          <div class="empty-state hidden" id="scheduledEmpty"><div class="icon">📅</div><p>No scheduled messages</p></div>
+        </div>
+      </div>
+
+      <div class="panel" id="botPanel">
+        <div class="status-card">
+          <div class="status-indicator" id="statusIcon">⏳</div>
+          <div class="status-info">
+            <h3 id="statusTitle">Connecting...</h3>
+            <p id="statusDesc">Establishing connection to WhatsApp</p>
+          </div>
+          <div class="status-actions">
+            <button class="btn-success" id="startBotBtn">Start Bot</button>
+            <button class="btn-danger" id="stopBotBtn">Stop Bot</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Bot Configuration</h2>
+            <button class="btn-primary btn-small" id="saveConfigBtn">Save</button>
+          </div>
+          <div class="card-body">
+            <div class="config-grid">
+              <div class="config-item">
+                <label>AI Model</label>
+                <input type="text" id="cfgModel" value="llama-3.3-70b-versatile">
+              </div>
+              <div class="config-item">
+                <label>Max Response Length</label>
+                <input type="number" id="cfgMaxTokens" value="1024">
+              </div>
+              <div class="config-item">
+                <label>Temperature</label>
+                <input type="number" id="cfgTemp" value="0.7" step="0.1" min="0" max="2">
+              </div>
+              <div class="config-item">
+                <label>Min Delay (seconds)</label>
+                <input type="number" id="cfgMinDelay" value="3" min="1">
+              </div>
+              <div class="config-item">
+                <label>Max Delay (seconds)</label>
+                <input type="number" id="cfgMaxDelay" value="25" min="1">
+              </div>
+              <div class="config-item">
+                <label>Typing Speed (chars/sec)</label>
+                <input type="number" id="cfgTyping" value="15" min="1">
+              </div>
+              <div class="config-item">
+                <label>Context Messages</label>
+                <input type="number" id="cfgContext" value="20" min="1">
+              </div>
+              <div class="config-item">
+                <label>Summary After</label>
+                <input type="number" id="cfgSummary" value="40" min="1">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2>Bot Purpose</h2></div>
+          <div class="card-body">
+            <p style="color:var(--text-muted);line-height:1.6">
+              This bot acts as a <strong>Koderix sales agent</strong>. It automatically responds to WhatsApp messages,
+              engages potential clients, understands their needs, and offers software development services.
+              The bot supports both English and Spanish, uses AI-powered responses via Groq, and maintains
+              conversation context for natural interactions.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -221,25 +310,25 @@
   <div class="modal-overlay hidden" id="modal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">Nuevo mensaje programado</h3>
+        <h3 id="modalTitle">New Scheduled Message</h3>
         <button class="close-btn" id="closeModal">&times;</button>
       </div>
       <form id="scheduledForm">
         <input type="hidden" id="msgId">
         <div class="form-group">
-          <label>Nombre del mensaje</label>
-          <input type="text" id="fName" required placeholder="Ej: Promo lunes">
+          <label>Message Name</label>
+          <input type="text" id="fName" required placeholder="e.g. Monday Promo">
         </div>
         <div class="form-group">
-          <label>Mensaje</label>
-          <textarea id="fMessage" required placeholder="Escribe el mensaje..."></textarea>
+          <label>Message</label>
+          <textarea id="fMessage" required placeholder="Type your message..."></textarea>
         </div>
         <div class="form-group">
-          <label>Imagen (opcional)</label>
+          <label>Image (optional)</label>
           <div class="image-upload" id="imageUpload">
             <input type="file" id="fImage" accept="image/*">
             <div class="icon">📷</div>
-            <p>Click para subir imagen</p>
+            <p>Click to upload image</p>
           </div>
           <div class="image-preview hidden" id="imagePreviewWrap">
             <img id="imagePreview" src="" alt="Preview">
@@ -247,50 +336,50 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Tipo de destino</label>
+          <label>Target Type</label>
           <select id="fTargetType" required>
-            <option value="group">Grupo</option>
-            <option value="contact">Contacto</option>
+            <option value="group">Group</option>
+            <option value="contact">Contact</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Destino</label>
+          <label>Target</label>
           <select id="fTargetId" required>
-            <option value="">Seleccione...</option>
+            <option value="">Select...</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Repetir</label>
+          <label>Repeat</label>
           <select id="fScheduleType" required>
-            <option value="daily">Diario</option>
-            <option value="weekly">Semanal</option>
-            <option value="custom">Una vez</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="custom">One-time</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Hora</label>
+          <label>Time</label>
           <input type="time" id="fScheduleTime" required>
         </div>
         <div class="form-group" id="weeklyDaysGroup" style="display:none">
-          <label>Días de la semana</label>
+          <label>Days of Week</label>
           <div class="schedule-options" id="weeklyDays">
-            <button type="button" class="day-btn" data-day="0">D</button>
-            <button type="button" class="day-btn" data-day="1">L</button>
-            <button type="button" class="day-btn" data-day="2">M</button>
-            <button type="button" class="day-btn" data-day="3">X</button>
-            <button type="button" class="day-btn" data-day="4">J</button>
-            <button type="button" class="day-btn" data-day="5">V</button>
+            <button type="button" class="day-btn" data-day="0">S</button>
+            <button type="button" class="day-btn" data-day="1">M</button>
+            <button type="button" class="day-btn" data-day="2">T</button>
+            <button type="button" class="day-btn" data-day="3">W</button>
+            <button type="button" class="day-btn" data-day="4">T</button>
+            <button type="button" class="day-btn" data-day="5">F</button>
             <button type="button" class="day-btn" data-day="6">S</button>
           </div>
         </div>
         <div class="form-group">
           <label class="checkbox-label">
-            <input type="checkbox" id="fIsActive" checked> Activo
+            <input type="checkbox" id="fIsActive" checked> Active
           </label>
         </div>
         <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
-          <button type="submit" class="btn-primary" style="flex:1">Guardar</button>
-          <button type="button" class="btn-secondary" id="cancelModal" style="flex:1">Cancelar</button>
+          <button type="submit" class="btn-primary" style="flex:1">Save</button>
+          <button type="button" class="btn-secondary" id="cancelModal" style="flex:1">Cancel</button>
         </div>
       </form>
     </div>
@@ -341,11 +430,11 @@
           showDashboard(data.username);
         } else {
           const err = await res.json();
-          errorEl.textContent = err.error || 'Error de autenticación';
+          errorEl.textContent = err.error || 'Authentication failed';
           errorEl.classList.remove('hidden');
         }
       } catch {
-        errorEl.textContent = 'Error de conexión';
+        errorEl.textContent = 'Connection error';
         errorEl.classList.remove('hidden');
       }
     });
@@ -365,8 +454,97 @@
     });
 
     async function loadAll() {
-      await Promise.all([loadGroups(), loadContacts(), loadScheduled()]);
+      await Promise.all([loadBotStatus(), loadGroups(), loadContacts(), loadScheduled()]);
     }
+
+    async function loadBotStatus() {
+      try {
+        const res = await fetch(`${API}/bot/status`, { credentials: 'include' });
+        const data = await res.json();
+        updateBotUI(data);
+      } catch (err) { console.error(err); }
+    }
+
+    function updateBotUI(data) {
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const startBtn = document.getElementById('startBotBtn');
+      const stopBtn = document.getElementById('stopBotBtn');
+
+      if (data.connected) {
+        icon.textContent = '🟢';
+        icon.className = 'status-indicator online';
+        title.textContent = 'Bot Online';
+        desc.textContent = 'Connected and ready to receive messages';
+        startBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+      } else if (data.enabled) {
+        icon.textContent = '🟡';
+        icon.className = 'status-indicator offline';
+        title.textContent = 'Connecting...';
+        desc.textContent = 'Establishing connection to WhatsApp';
+        startBtn.classList.add('hidden');
+        stopBtn.classList.remove('hidden');
+      } else {
+        icon.textContent = '🔴';
+        icon.className = 'status-indicator offline';
+        title.textContent = 'Bot Offline';
+        desc.textContent = 'Bot is disabled. Click Start to connect.';
+        startBtn.classList.remove('hidden');
+        stopBtn.classList.add('hidden');
+      }
+
+      if (data.config) {
+        document.getElementById('cfgModel').value = data.config.model || 'llama-3.3-70b-versatile';
+        document.getElementById('cfgMaxTokens').value = data.config.maxTokens || 1024;
+        document.getElementById('cfgTemp').value = data.config.temperature || 0.7;
+        document.getElementById('cfgMinDelay').value = data.config.minDelay || 3;
+        document.getElementById('cfgMaxDelay').value = data.config.maxDelay || 25;
+        document.getElementById('cfgTyping').value = data.config.typingSpeed || 15;
+        document.getElementById('cfgContext').value = data.config.maxContext || 20;
+        document.getElementById('cfgSummary').value = data.config.summarizeAfter || 40;
+      }
+    }
+
+    document.getElementById('startBotBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API}/bot/start`, { method: 'POST', credentials: 'include' });
+        if (res.ok) { showToast('Bot started', 'success'); loadBotStatus(); }
+        else showToast('Failed to start bot', 'error');
+      } catch { showToast('Connection error', 'error'); }
+    });
+
+    document.getElementById('stopBotBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API}/bot/stop`, { method: 'POST', credentials: 'include' });
+        if (res.ok) { showToast('Bot stopped', 'success'); loadBotStatus(); }
+        else showToast('Failed to stop bot', 'error');
+      } catch { showToast('Connection error', 'error'); }
+    });
+
+    document.getElementById('saveConfigBtn').addEventListener('click', async () => {
+      const payload = {
+        model: document.getElementById('cfgModel').value,
+        maxTokens: parseInt(document.getElementById('cfgMaxTokens').value),
+        temperature: parseFloat(document.getElementById('cfgTemp').value),
+        minDelay: parseInt(document.getElementById('cfgMinDelay').value),
+        maxDelay: parseInt(document.getElementById('cfgMaxDelay').value),
+        typingSpeed: parseInt(document.getElementById('cfgTyping').value),
+        maxContext: parseInt(document.getElementById('cfgContext').value),
+        summarizeAfter: parseInt(document.getElementById('cfgSummary').value),
+      };
+      try {
+        const res = await fetch(`${API}/bot/config`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) { showToast('Configuration saved', 'success'); loadBotStatus(); }
+        else showToast('Failed to save', 'error');
+      } catch { showToast('Connection error', 'error'); }
+    });
 
     async function loadGroups() {
       try {
@@ -402,7 +580,7 @@
           <td>${esc(g.name)}</td>
           <td><code>${g.id}</code></td>
           <td><span class="badge badge-info">${g.participants}</span></td>
-          <td><button class="btn-secondary btn-small" onclick="useTarget('group','${esc(g.id)}','${esc(g.name)}')">Usar</button></td>
+          <td><button class="btn-secondary btn-small" onclick="useTarget('group','${esc(g.id)}','${esc(g.name)}')">Use</button></td>
         </tr>`).join('');
     }
 
@@ -416,7 +594,7 @@
           <td>${esc(c.name)}</td>
           <td>${esc(c.phone)}</td>
           <td><code>${c.id}</code></td>
-          <td><button class="btn-secondary btn-small" onclick="useTarget('contact','${esc(c.id)}','${esc(c.name)}')">Usar</button></td>
+          <td><button class="btn-secondary btn-small" onclick="useTarget('contact','${esc(c.id)}','${esc(c.name)}')">Use</button></td>
         </tr>`).join('');
     }
 
@@ -429,14 +607,14 @@
         <tr>
           <td>${esc(m.name)}${m.image ? ' 📷' : ''}</td>
           <td>${esc(m.targetName)}</td>
-          <td><span class="badge badge-info">${m.schedule.type === 'daily' ? 'Diario' : m.schedule.type === 'weekly' ? 'Semanal' : 'Una vez'}</span> ${m.schedule.time}</td>
-          <td><span class="badge ${m.isActive ? 'badge-success' : 'badge-danger'}">${m.isActive ? 'Activo' : 'Inactivo'}</span></td>
-          <td>${m.nextRun ? new Date(m.nextRun).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+          <td><span class="badge badge-info">${m.schedule.type === 'daily' ? 'Daily' : m.schedule.type === 'weekly' ? 'Weekly' : 'Once'}</span> ${m.schedule.time}</td>
+          <td><span class="badge ${m.isActive ? 'badge-success' : 'badge-danger'}">${m.isActive ? 'Active' : 'Inactive'}</span></td>
+          <td>${m.nextRun ? new Date(m.nextRun).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
           <td>
             <div class="actions">
-              <button class="btn-secondary btn-small" onclick="editScheduled('${m._id}')">Editar</button>
-              <button class="btn-secondary btn-small" onclick="testScheduled('${m._id}')">Probar</button>
-              <button class="btn-danger btn-small" onclick="deleteScheduled('${m._id}')">Eliminar</button>
+              <button class="btn-secondary btn-small" onclick="editScheduled('${m._id}')">Edit</button>
+              <button class="btn-secondary btn-small" onclick="testScheduled('${m._id}')">Test</button>
+              <button class="btn-danger btn-small" onclick="deleteScheduled('${m._id}')">Delete</button>
             </div>
           </td>
         </tr>`).join('');
@@ -457,7 +635,7 @@
       currentEditingId = null;
 
       if (edit && data) {
-        document.getElementById('modalTitle').textContent = 'Editar mensaje';
+        document.getElementById('modalTitle').textContent = 'Edit Scheduled Message';
         currentEditingId = data._id;
         document.getElementById('fName').value = data.name;
         document.getElementById('fMessage').value = data.message;
@@ -481,7 +659,7 @@
         }
         loadTargetOptions(data.targetType, data.targetId);
       } else {
-        document.getElementById('modalTitle').textContent = 'Nuevo mensaje programado';
+        document.getElementById('modalTitle').textContent = 'New Scheduled Message';
         loadTargetOptions('group', null);
       }
       modal.classList.remove('hidden');
@@ -514,8 +692,7 @@
       const reader = new FileReader();
       reader.onload = ev => {
         const result = ev.target.result;
-        const base64 = result.split(',')[1];
-        uploadedImageBase64 = base64;
+        uploadedImageBase64 = result.split(',')[1];
         uploadedImageMime = file.type;
         document.getElementById('imagePreview').src = result;
         document.getElementById('imagePreviewWrap').classList.remove('hidden');
@@ -538,12 +715,12 @@
 
     async function loadTargetOptions(type, selected) {
       const select = document.getElementById('fTargetId');
-      select.innerHTML = '<option value="">Cargando...</option>';
+      select.innerHTML = '<option value="">Loading...</option>';
       try {
         const res = await fetch(`${API}/${type === 'group' ? 'groups' : 'contacts'}`, { credentials: 'include' });
         const data = await res.json();
         const items = data.groups || data.contacts || [];
-        select.innerHTML = '<option value="">Seleccione...</option>' + items.map(i =>
+        select.innerHTML = '<option value="">Select...</option>' + items.map(i =>
           `<option value="${esc(i.id)}" ${i.id === selected ? 'selected' : ''}>${esc(i.name)}</option>`
         ).join('');
       } catch { select.innerHTML = '<option value="">Error</option>'; }
@@ -554,7 +731,7 @@
     document.getElementById('scheduledForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const targetId = document.getElementById('fTargetId').value;
-      if (!targetId) { showToast('Seleccione un destino', 'error'); return; }
+      if (!targetId) { showToast('Please select a target', 'error'); return; }
       const targetName = document.getElementById('fTargetId').selectedOptions[0]?.textContent || '';
       const days = [...document.querySelectorAll('.day-btn.active')].map(b => parseInt(b.dataset.day));
       const schedule = { type: document.getElementById('fScheduleType').value, time: document.getElementById('fScheduleTime').value, timezone: 'America/Argentina/Buenos_Aires' };
@@ -580,9 +757,9 @@
           credentials: 'include',
           body: JSON.stringify(payload)
         });
-        if (res.ok) { closeModal(); loadScheduled(); showToast('Guardado correctamente', 'success'); }
+        if (res.ok) { closeModal(); loadScheduled(); showToast('Saved successfully', 'success'); }
         else { const err = await res.json(); showToast(err.error || 'Error', 'error'); }
-      } catch { showToast('Error de conexión', 'error'); }
+      } catch { showToast('Connection error', 'error'); }
     });
 
     async function editScheduled(id) {
@@ -591,25 +768,25 @@
         const { messages } = await res.json();
         const msg = messages.find(m => m._id === id);
         if (msg) openModal(true, msg);
-      } catch { showToast('Error cargando', 'error'); }
+      } catch { showToast('Error loading', 'error'); }
     }
 
     async function testScheduled(id) {
-      if (!confirm('¿Enviar mensaje de prueba ahora?')) return;
+      if (!confirm('Send test message now?')) return;
       try {
         const res = await fetch(`${API}/scheduled/${id}/test`, { method: 'POST', credentials: 'include' });
-        if (res.ok) showToast('Mensaje enviado', 'success');
-        else showToast('Error enviando', 'error');
-      } catch { showToast('Error de conexión', 'error'); }
+        if (res.ok) showToast('Message sent', 'success');
+        else showToast('Failed to send', 'error');
+      } catch { showToast('Connection error', 'error'); }
     }
 
     async function deleteScheduled(id) {
-      if (!confirm('¿Eliminar? Se borrará el mensaje y su imagen de la DB.')) return;
+      if (!confirm('Delete this scheduled message? The image will also be removed from the database.')) return;
       try {
         const res = await fetch(`${API}/scheduled/${id}`, { method: 'DELETE', credentials: 'include' });
-        if (res.ok) { loadScheduled(); showToast('Eliminado', 'success'); }
-        else showToast('Error eliminando', 'error');
-      } catch { showToast('Error de conexión', 'error'); }
+        if (res.ok) { loadScheduled(); showToast('Deleted', 'success'); }
+        else showToast('Error deleting', 'error');
+      } catch { showToast('Connection error', 'error'); }
     }
 
     function showToast(msg, type = 'success') {

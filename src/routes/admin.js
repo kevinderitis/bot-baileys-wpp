@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getSocket, getRealPhone } from '../socket.js';
+import { getSocket, getRealPhone, getIsConnected, startBot, stopBot, isBotEnabled } from '../socket.js';
 import ScheduledMessage from '../models/ScheduledMessage.js';
 import config from '../config.js';
 import logger from '../utils/logger.js';
@@ -45,14 +45,21 @@ function getGroups() {
   const sock = getSocket();
   if (!sock) return [];
   const groups = [];
-  for (const [jid, chat] of sock.chats.all()) {
-    if (jid.endsWith('@g.us')) {
-      groups.push({
-        id: jid,
-        name: chat.name || 'Sin nombre',
-        participants: chat.participants?.length || 0,
-      });
+  try {
+    const chats = sock.chats;
+    if (chats && typeof chats.values === 'function') {
+      for (const [jid, chat] of chats) {
+        if (jid.endsWith('@g.us')) {
+          groups.push({
+            id: jid,
+            name: chat.name || chat.subject || 'Sin nombre',
+            participants: chat.participants?.length || 0,
+          });
+        }
+      }
     }
+  } catch (e) {
+    logger.error({ err: e }, 'Error obteniendo grupos');
   }
   return groups;
 }
@@ -155,5 +162,54 @@ function calculateNextRun(schedule) {
   }
   return runDate;
 }
+
+router.get('/bot/status', authMiddleware, (req, res) => {
+  res.json({
+    connected: getIsConnected(),
+    enabled: isBotEnabled(),
+    config: {
+      model: config.groq.model,
+      maxTokens: config.groq.maxTokens,
+      temperature: config.groq.temperature,
+      minDelay: config.bot.minDelaySeconds,
+      maxDelay: config.bot.maxDelaySeconds,
+      typingSpeed: config.bot.typingSpeedCPS,
+      maxContext: config.ai.maxContextMessages,
+      summarizeAfter: config.ai.summarizeAfter,
+    },
+  });
+});
+
+router.post('/bot/start', authMiddleware, (req, res) => {
+  startBot();
+  res.json({ ok: true });
+});
+
+router.post('/bot/stop', authMiddleware, (req, res) => {
+  stopBot();
+  res.json({ ok: true });
+});
+
+router.put('/bot/config', authMiddleware, (req, res) => {
+  const { model, maxTokens, temperature, minDelay, maxDelay, typingSpeed, maxContext, summarizeAfter } = req.body;
+  if (model) config.groq.model = model;
+  if (maxTokens) config.groq.maxTokens = maxTokens;
+  if (temperature !== undefined) config.groq.temperature = temperature;
+  if (minDelay) config.bot.minDelaySeconds = minDelay;
+  if (maxDelay) config.bot.maxDelaySeconds = maxDelay;
+  if (typingSpeed) config.bot.typingSpeedCPS = typingSpeed;
+  if (maxContext) config.ai.maxContextMessages = maxContext;
+  if (summarizeAfter) config.ai.summarizeAfter = summarizeAfter;
+  res.json({ ok: true, config: {
+    model: config.groq.model,
+    maxTokens: config.groq.maxTokens,
+    temperature: config.groq.temperature,
+    minDelay: config.bot.minDelaySeconds,
+    maxDelay: config.bot.maxDelaySeconds,
+    typingSpeed: config.bot.typingSpeedCPS,
+    maxContext: config.ai.maxContextMessages,
+    summarizeAfter: config.ai.summarizeAfter,
+  }});
+});
 
 export default router;

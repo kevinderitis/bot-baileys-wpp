@@ -17,6 +17,7 @@ let sock = null;
 let messageHandler = null;
 let currentQR = null;
 let _isConnected = false;
+let _botEnabled = true;
 const phoneMap = new Map();
 
 async function createSocket() {
@@ -141,4 +142,21 @@ function getRealPhone(remoteJid) {
   return m ? m[1] : remoteJid.replace(/@.*$/, '');
 }
 
-export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected, getPhone, getRealPhone };
+function startBot() {
+  _botEnabled = true;
+  createSocket();
+}
+
+function stopBot() {
+  _botEnabled = false;
+  if (sock) {
+    try { sock.end(); } catch {}
+    sock = null;
+  }
+  _isConnected = false;
+  currentQR = null;
+}
+
+function isBotEnabled() { return _botEnabled; }
+
+export { createSocket as default, setMessageHandler, getSocket, getQR, getIsConnected, getPhone, getRealPhone, startBot, stopBot, isBotEnabled };
