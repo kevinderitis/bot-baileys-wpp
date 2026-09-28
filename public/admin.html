@@ -183,9 +183,10 @@
         <a href="/qr" target="_blank" class="btn-success btn-small" id="headerConnectBtn" style="display:none;text-decoration:none">Connect</a>
         <div style="position:relative">
           <button class="btn-secondary btn-small" id="hamburgerBtn" style="padding:0.4rem 0.6rem">☰</button>
-          <div id="userMenu" style="display:none;position:absolute;right:0;top:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);padding:0.75rem;min-width:160px;z-index:200;margin-top:0.25rem">
+          <div id="userMenu" style="display:none;position:absolute;right:0;top:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);padding:0.75rem;min-width:180px;z-index:200;margin-top:0.25rem">
             <div style="padding:0.5rem 0;font-size:0.85rem;font-weight:500" id="currentUser"></div>
             <hr style="border:none;border-top:1px solid var(--border);margin:0.5rem 0">
+            <a href="/qr" target="_blank" class="btn-success btn-small" id="menuConnectBtn" style="display:none;text-decoration:none;margin-bottom:0.5rem">Connect WhatsApp</a>
             <button class="btn-danger btn-small" id="logoutBtn" style="width:100%">Logout</button>
           </div>
         </div>
@@ -514,6 +515,7 @@
       const headerDot = document.getElementById('headerStatusDot');
       const headerText = document.getElementById('headerStatusText');
       const headerConnect = document.getElementById('headerConnectBtn');
+      const menuConnect = document.getElementById('menuConnectBtn');
 
       if (data.connected) {
         icon.textContent = '🟢';
@@ -525,6 +527,7 @@
         headerDot.style.background = 'var(--success)';
         headerText.textContent = 'Connected';
         headerConnect.style.display = 'none';
+        menuConnect.style.display = 'none';
       } else {
         icon.textContent = '🔴';
         title.textContent = 'WhatsApp Not Connected';
@@ -535,6 +538,7 @@
         headerDot.style.background = 'var(--danger)';
         headerText.textContent = 'Disconnected';
         headerConnect.style.display = 'inline-block';
+        menuConnect.style.display = 'block';
       }
     }
 
