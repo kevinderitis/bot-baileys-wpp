@@ -67,7 +67,9 @@ async function createSocket() {
     }
   });
 
-  sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+  sock.ev.on('connection.update', async (update) => {
+    const { connection, lastDisconnect, qr } = update;
+    logger.info({ connection, hasQR: !!qr }, 'Connection update');
     if (qr) {
       currentQR = qr;
       qrcode.generate(qr, { small: true });
@@ -141,7 +143,10 @@ function getRealPhone(remoteJid) {
 
 function startBot() {
   _botEnabled = true;
-  createSocket();
+  logger.info('Starting bot...');
+  createSocket().catch(err => {
+    logger.error({ err }, 'Error starting bot');
+  });
 }
 
 function stopBot() {
