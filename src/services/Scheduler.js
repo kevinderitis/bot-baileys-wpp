@@ -61,12 +61,17 @@ class Scheduler {
       return;
     }
     try {
-      await sock.sendMessage(doc.targetId, { text: doc.message });
+      if (doc.image) {
+        const buffer = Buffer.from(doc.image, 'base64');
+        await sock.sendMessage(doc.targetId, { image: buffer, caption: doc.message || '', mimetype: doc.imageMimeType || 'image/jpeg' });
+      } else {
+        await sock.sendMessage(doc.targetId, { text: doc.message });
+      }
       doc.lastSent = new Date();
       doc.nextRun = this.calculateNextRun(doc.schedule);
       await doc.save();
       this.scheduleJob(doc);
-      logger.info({ id: doc._id, target: doc.targetId }, 'Mensaje programado enviado');
+      logger.info({ id: doc._id, target: doc.targetId, hasImage: !!doc.image }, 'Mensaje programado enviado');
     } catch (err) {
       logger.error({ err, id: doc._id }, 'Error enviando mensaje programado');
     }

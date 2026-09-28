@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const scheduledMessageSchema = new mongoose.Schema({
   name: { type: String, required: true },
   message: { type: String, required: true },
+  image: { type: String, default: '' },
+  imageMimeType: { type: String, default: '' },
   targetType: { type: String, enum: ['group', 'contact', 'broadcast'], required: true },
   targetId: { type: String, required: true },
   targetName: { type: String, required: true },

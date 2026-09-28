@@ -87,18 +87,18 @@ router.get('/scheduled', authMiddleware, async (req, res) => {
 });
 
 router.post('/scheduled', authMiddleware, async (req, res) => {
-  const { name, message, targetType, targetId, targetName, schedule } = req.body;
+  const { name, message, image, imageMimeType, targetType, targetId, targetName, schedule } = req.body;
   if (!name || !message || !targetType || !targetId || !targetName || !schedule) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
   const nextRun = calculateNextRun(schedule);
-  const doc = await ScheduledMessage.create({ name, message, targetType, targetId, targetName, schedule, nextRun });
+  const doc = await ScheduledMessage.create({ name, message, image: image || '', imageMimeType: imageMimeType || '', targetType, targetId, targetName, schedule, nextRun });
   res.json({ message: doc });
 });
 
 router.put('/scheduled/:id', authMiddleware, async (req, res) => {
-  const { name, message, targetType, targetId, targetName, schedule, isActive } = req.body;
-  const update = { name, message, targetType, targetId, targetName, schedule, isActive };
+  const { name, message, image, imageMimeType, targetType, targetId, targetName, schedule, isActive } = req.body;
+  const update = { name, message, image: image || '', imageMimeType: imageMimeType || '', targetType, targetId, targetName, schedule, isActive };
   if (schedule) update.nextRun = calculateNextRun(schedule);
   const doc = await ScheduledMessage.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!doc) return res.status(404).json({ error: 'No encontrado' });
@@ -113,16 +113,21 @@ router.delete('/scheduled/:id', authMiddleware, async (req, res) => {
 router.post('/scheduled/:id/test', authMiddleware, async (req, res) => {
   const doc = await ScheduledMessage.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: 'No encontrado' });
-  await sendToTarget(doc.targetType, doc.targetId, doc.message);
+  await sendToTarget(doc.targetType, doc.targetId, doc.message, doc.image, doc.imageMimeType);
   res.json({ ok: true });
 });
 
-async function sendToTarget(targetType, targetId, text) {
+async function sendToTarget(targetType, targetId, text, image = '', imageMimeType = '') {
   const sock = getSocket();
   if (!sock) throw new Error('Socket no disponible');
   const jid = targetType === 'group' ? targetId : targetId;
-  await sock.sendMessage(jid, { text });
-  logger.info({ targetType, targetId }, 'Mensaje programado enviado');
+  if (image) {
+    const buffer = Buffer.from(image, 'base64');
+    await sock.sendMessage(jid, { image: buffer, caption: text || '', mimetype: imageMimeType || 'image/jpeg' });
+  } else {
+    await sock.sendMessage(jid, { text });
+  }
+  logger.info({ targetType, targetId, hasImage: !!image }, 'Mensaje programado enviado');
 }
 
 function calculateNextRun(schedule) {
