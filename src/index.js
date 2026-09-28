@@ -127,6 +127,4 @@ const handler = makeHandler();
 setMessageHandler(handler);
 await scheduler.start();
 
-if (process.env.AUTO_START_BOT === 'true') {
-  startBot();
-}
+startBot();

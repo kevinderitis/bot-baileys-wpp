@@ -72,8 +72,11 @@ async function createSocket() {
     logger.info({ connection, hasQR: !!qr }, 'Connection update');
     if (qr) {
       currentQR = qr;
-      qrcode.generate(qr, { small: true });
-      logger.info('QR Code generated - scan with WhatsApp or visit /qr');
+      if (!isSessionRegistered()) {
+        qrcode.generate(qr, { small: true });
+        logger.info('Escanea el código QR con WhatsApp');
+        logger.info('O visita /qr en el navegador para escanear');
+      }
       return;
     }
 
