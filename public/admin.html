@@ -174,7 +174,7 @@
 
   <div class="hidden" id="dashboardView">
     <header class="header">
-      <h1>WhatsApp Bot</h1>
+      <h1>Arena Bot</h1>
       <div class="header-right">
         <span id="currentUser"></span>
         <button class="btn-danger btn-small" id="logoutBtn">Logout</button>
@@ -182,10 +182,26 @@
     </header>
     <div class="container">
       <div class="tabs">
-        <button class="tab active" data-tab="groups">Groups</button>
+        <button class="tab active" data-tab="scheduled">Schedules</button>
+        <button class="tab" data-tab="groups">Groups</button>
         <button class="tab" data-tab="contacts">Contacts</button>
-        <button class="tab" data-tab="scheduled">Schedules</button>
         <button class="tab" data-tab="bot">Bot</button>
+      </div>
+
+      <div class="panel" id="scheduledPanel">
+        <div class="card">
+          <div class="card-header">
+            <h2>Scheduled Messages</h2>
+            <button class="btn-primary btn-small" id="newScheduledBtn">+ New</button>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Name</th><th>Target</th><th>Schedule</th><th>Status</th><th>Next Run</th><th></th></tr></thead>
+              <tbody id="scheduledTable"></tbody>
+            </table>
+          </div>
+          <div class="empty-state hidden" id="scheduledEmpty"><div class="icon">📅</div><p>No scheduled messages</p></div>
+        </div>
       </div>
 
       <div class="panel" id="groupsPanel">
@@ -734,7 +750,7 @@
       if (!targetId) { showToast('Please select a target', 'error'); return; }
       const targetName = document.getElementById('fTargetId').selectedOptions[0]?.textContent || '';
       const days = [...document.querySelectorAll('.day-btn.active')].map(b => parseInt(b.dataset.day));
-      const schedule = { type: document.getElementById('fScheduleType').value, time: document.getElementById('fScheduleTime').value, timezone: 'America/Argentina/Buenos_Aires' };
+      const schedule = { type: document.getElementById('fScheduleType').value, time: document.getElementById('fScheduleTime').value, timezone: 'Asia/Bangkok' };
       if (schedule.type === 'weekly') schedule.daysOfWeek = days;
 
       const payload = {

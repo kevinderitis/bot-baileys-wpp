@@ -12,7 +12,7 @@ const scheduledMessageSchema = new mongoose.Schema({
     type: { type: String, enum: ['daily', 'weekly', 'custom'], required: true },
     daysOfWeek: [{ type: Number, min: 0, max: 6 }],
     time: { type: String, required: true },
-    timezone: { type: String, default: 'America/Argentina/Buenos_Aires' },
+    timezone: { type: String, default: 'Asia/Bangkok' },
   },
   isActive: { type: Boolean, default: true },
   lastSent: { type: Date },

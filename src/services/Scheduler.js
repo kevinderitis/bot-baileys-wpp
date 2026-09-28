@@ -79,28 +79,37 @@ class Scheduler {
 
   calculateNextRun(schedule) {
     const now = new Date();
+    const tz = schedule.timezone || 'Asia/Bangkok';
     const [hh, mm] = schedule.time.split(':').map(Number);
-    const runDate = new Date(now);
-    runDate.setHours(hh, mm, 0, 0);
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hourCycle: 'h23',
+    });
+    const parts = formatter.formatToParts(now);
+    const get = t => parseInt(parts.find(p => p.type === t)?.value || '0');
+    const nowInTz = new Date(get('year'), get('month') - 1, get('day'), hh, mm, 0, 0);
 
     if (schedule.type === 'daily') {
-      if (runDate <= now) runDate.setDate(runDate.getDate() + 1);
+      if (nowInTz <= now) nowInTz.setDate(nowInTz.getDate() + 1);
     } else if (schedule.type === 'weekly') {
       const days = schedule.daysOfWeek || [now.getDay()];
       let nextDay = days.find(d => {
-        const candidate = new Date(runDate);
+        const candidate = new Date(nowInTz);
         const diff = (d - candidate.getDay() + 7) % 7;
         candidate.setDate(candidate.getDate() + diff);
         return candidate > now;
       });
       if (nextDay === undefined) nextDay = days[0];
-      const diff = (nextDay - runDate.getDay() + 7) % 7;
-      runDate.setDate(runDate.getDate() + diff);
-      if (runDate <= now) runDate.setDate(runDate.getDate() + 7);
+      const diff = (nextDay - nowInTz.getDay() + 7) % 7;
+      nowInTz.setDate(nowInTz.getDate() + diff);
+      if (nowInTz <= now) nowInTz.setDate(nowInTz.getDate() + 7);
     } else {
-      if (runDate <= now) runDate.setDate(runDate.getDate() + 1);
+      if (nowInTz <= now) nowInTz.setDate(nowInTz.getDate() + 1);
     }
-    return runDate;
+    return nowInTz;
   }
 
   refreshJob(doc) {
