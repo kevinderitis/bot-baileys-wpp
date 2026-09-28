@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getSocket, getRealPhone, getIsConnected, startBot, stopBot, isBotEnabled } from '../socket.js';
+import { getSocket, getRealPhone, getIsConnected, startBot, stopBot, isBotEnabled, getQR } from '../socket.js';
 import ScheduledMessage from '../models/ScheduledMessage.js';
 import BotSettings from '../models/BotSettings.js';
 import config from '../config.js';
@@ -188,6 +188,14 @@ router.get('/bot/status', authMiddleware, (req, res) => {
       summarizeAfter: config.ai.summarizeAfter,
     },
   });
+});
+
+router.get('/bot/qr', authMiddleware, async (req, res) => {
+  const qr = getQR();
+  if (!qr) return res.json({ qr: null });
+  const QRCode = (await import('qrcode')).default;
+  const dataUrl = await QRCode.toDataURL(qr);
+  res.json({ qr: dataUrl });
 });
 
 router.post('/bot/start', authMiddleware, (req, res) => {

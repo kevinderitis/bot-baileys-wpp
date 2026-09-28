@@ -265,6 +265,15 @@
           </div>
         </div>
 
+        <div class="card" id="qrCard" style="display:none">
+          <div class="card-header"><h2>Connect WhatsApp</h2></div>
+          <div class="card-body" style="text-align:center">
+            <p style="color:var(--text-muted);margin-bottom:1rem">Scan this QR code with WhatsApp to link your account</p>
+            <img id="qrImage" src="" alt="QR Code" style="max-width:280px;width:100%;border-radius:8px;border:1px solid var(--border)">
+            <p style="color:var(--text-muted);margin-top:0.75rem;font-size:0.85rem">WhatsApp → Settings → Linked Devices → Link a Device</p>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
             <h2>Bot Configuration</h2>
@@ -464,8 +473,25 @@
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab + 'Panel').classList.add('active');
+        if (btn.dataset.tab === 'bot') {
+          loadBotStatus();
+          startQRPolling();
+        } else {
+          stopQRPolling();
+        }
       });
     });
+
+    let qrPollInterval = null;
+    function startQRPolling() {
+      stopQRPolling();
+      qrPollInterval = setInterval(() => {
+        loadBotStatus();
+      }, 3000);
+    }
+    function stopQRPolling() {
+      if (qrPollInterval) { clearInterval(qrPollInterval); qrPollInterval = null; }
+    }
 
     async function loadAll() {
       await Promise.all([loadBotStatus(), loadBotPurpose(), loadGroups(), loadContacts(), loadScheduled()]);
@@ -476,6 +502,22 @@
         const res = await fetch(`${API}/bot/status`, { credentials: 'include' });
         const data = await res.json();
         updateBotUI(data);
+        if (!data.connected && data.enabled) {
+          await loadQR();
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function loadQR() {
+      try {
+        const res = await fetch(`${API}/bot/qr`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.qr) {
+          document.getElementById('qrImage').src = data.qr;
+          document.getElementById('qrCard').style.display = 'block';
+        } else {
+          document.getElementById('qrCard').style.display = 'none';
+        }
       } catch (err) { console.error(err); }
     }
 
@@ -485,6 +527,7 @@
       const desc = document.getElementById('statusDesc');
       const startBtn = document.getElementById('startBotBtn');
       const stopBtn = document.getElementById('stopBotBtn');
+      const qrCard = document.getElementById('qrCard');
 
       if (data.connected) {
         icon.textContent = '🟢';
@@ -493,13 +536,15 @@
         desc.textContent = 'Connected and ready to receive messages';
         startBtn.classList.add('hidden');
         stopBtn.classList.remove('hidden');
+        qrCard.style.display = 'none';
       } else if (data.enabled) {
         icon.textContent = '🟡';
         icon.className = 'status-indicator offline';
         title.textContent = 'Connecting...';
-        desc.textContent = 'Establishing connection to WhatsApp';
+        desc.textContent = 'Scan the QR code below to connect WhatsApp';
         startBtn.classList.add('hidden');
         stopBtn.classList.remove('hidden');
+        qrCard.style.display = 'block';
       } else {
         icon.textContent = '🔴';
         icon.className = 'status-indicator offline';
@@ -507,6 +552,7 @@
         desc.textContent = 'Bot is disabled. Click Start to connect.';
         startBtn.classList.remove('hidden');
         stopBtn.classList.add('hidden');
+        qrCard.style.display = 'none';
       }
 
       if (data.config) {
