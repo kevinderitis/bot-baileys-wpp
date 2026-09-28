@@ -17,7 +17,7 @@ let sock = null;
 let messageHandler = null;
 let currentQR = null;
 let _isConnected = false;
-let _botEnabled = true;
+let _botEnabled = false;
 const phoneMap = new Map();
 
 async function createSocket() {

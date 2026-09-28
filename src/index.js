@@ -124,7 +124,6 @@ app.listen(config.server.port, () => {
   logger.info({ port: config.server.port }, 'Servidor Express iniciado');
 });
 
-const sock = await createSocket();
 const handler = makeHandler();
 setMessageHandler(handler);
 await scheduler.start();
