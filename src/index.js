@@ -55,17 +55,18 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/qr', async (req, res) => {
-  if (getIsConnected()) {
-    const connected = getIsConnected();
+  const connected = getIsConnected();
+  const qr = getQR();
+
+  if (connected) {
     return res.send(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>WhatsApp Bot - Sesión activa</title>
+<head><meta charset="utf-8"><title>Arena Bot - Connected</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;flex-direction:column;text-align:center;padding:20px}
 .card{background:white;border-radius:12px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:400px;width:100%}
 .status{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px}
 .status.online{background:#4CAF50}
-.status.offline{background:#ff9800}
 h2{color:#333;margin:10px 0}
 p{color:#666;margin:8px 0}
 .btn{display:inline-block;padding:10px 20px;border-radius:6px;text-decoration:none;color:white;margin-top:16px;border:none;font-size:14px;cursor:pointer}
@@ -76,27 +77,47 @@ a{color:#2196F3;text-decoration:none}</style>
 <body>
 <div class="card">
 <div style="display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-<span class="status ${connected ? 'online' : 'offline'}"></span>
-<span>${connected ? 'Conectado' : 'Reconectando...'}</span>
+<span class="status online"></span>
+<span>Connected</span>
 </div>
-<h2>WhatsApp conectado</h2>
-<p>El bot está vinculado a una cuenta de WhatsApp.</p>
-<form action="/logout" method="POST" onsubmit="return confirm('¿Cerrar sesión de WhatsApp?')">
-<button class="btn btn-danger">Cerrar sesión</button>
+<h2>WhatsApp Connected</h2>
+<p>The bot is linked and ready.</p>
+<form action="/logout" method="POST" onsubmit="return confirm('Log out of WhatsApp?')">
+<button class="btn btn-danger">Logout</button>
 </form>
 </div>
 </body>
 </html>`);
   }
 
-  const qr = getQR();
   if (!qr) {
-    return res.status(404).send('No hay QR disponible. Espera a que el bot genere uno.');
+    return res.send(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Arena Bot - QR Code</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;flex-direction:column;text-align:center;padding:20px}
+.card{background:white;border-radius:12px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:400px;width:100%}
+h2{color:#333;margin:10px 0}
+p{color:#666;margin:8px 0}
+.spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>Generating QR Code...</h2>
+<div class="spinner"></div>
+<p>Please wait, this will refresh automatically.</p>
+<script>setTimeout(()=>location.reload(),3000)</script>
+</div>
+</body>
+</html>`);
   }
+
   const qrImage = await QR.toDataURL(qr);
   res.send(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Escanear QR - WhatsApp Bot</title>
+<head><meta charset="utf-8"><title>Arena Bot - Scan QR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;flex-direction:column;text-align:center;padding:20px}
 img{max-width:100%;width:300px;height:auto;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15)}
@@ -105,9 +126,10 @@ p{color:#666;margin-top:10px}</style>
 </head>
 <body>
 <div>
-<h2>Escanéa este código QR con WhatsApp</h2>
+<h2>Scan this QR code with WhatsApp</h2>
 <img src="${qrImage}" alt="QR Code">
-<p>Abre WhatsApp → Menú → Dispositivos vinculados → Vincular un dispositivo</p>
+<p>WhatsApp → Settings → Linked Devices → Link a Device</p>
+<script>setTimeout(()=>location.reload(),60000)</script>
 </div>
 </body>
 </html>`);

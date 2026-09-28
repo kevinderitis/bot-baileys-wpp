@@ -491,7 +491,6 @@
       const desc = document.getElementById('statusDesc');
       const startBtn = document.getElementById('startBotBtn');
       const stopBtn = document.getElementById('stopBotBtn');
-      const qrCard = document.getElementById('qrCard');
       const headerDot = document.getElementById('headerStatusDot');
       const headerText = document.getElementById('headerStatusText');
       const headerConnect = document.getElementById('headerConnectBtn');
@@ -503,7 +502,6 @@
         desc.textContent = 'Connected and ready to receive messages';
         startBtn.classList.add('hidden');
         stopBtn.classList.remove('hidden');
-        qrCard.style.display = 'none';
         headerDot.style.background = 'var(--success)';
         headerText.textContent = 'Connected';
         headerConnect.style.display = 'none';
@@ -511,10 +509,9 @@
         icon.textContent = '🟡';
         icon.className = 'status-indicator offline';
         title.textContent = 'Connecting...';
-        desc.textContent = 'Scan the QR code below to connect WhatsApp';
+        desc.textContent = 'Opening QR code page...';
         startBtn.classList.add('hidden');
         stopBtn.classList.remove('hidden');
-        qrCard.style.display = 'block';
         headerDot.style.background = 'var(--warning)';
         headerText.textContent = 'Connecting...';
         headerConnect.style.display = 'none';
@@ -522,10 +519,9 @@
         icon.textContent = '🔴';
         icon.className = 'status-indicator offline';
         title.textContent = 'WhatsApp Not Connected';
-        desc.textContent = 'Click Connect WhatsApp and scan the QR code';
+        desc.textContent = 'Click Connect to open QR code';
         startBtn.classList.remove('hidden');
         stopBtn.classList.add('hidden');
-        qrCard.style.display = 'none';
         headerDot.style.background = 'var(--danger)';
         headerText.textContent = 'Disconnected';
         headerConnect.style.display = 'inline-block';
@@ -545,9 +541,9 @@
 
     document.getElementById('startBotBtn').addEventListener('click', async () => {
       try {
-        const res = await fetch(`${API}/bot/start`, { method: 'POST', credentials: 'include' });
-        if (res.ok) { showToast('Connecting...', 'success'); loadBotStatus(); startQRPolling(); }
-        else showToast('Failed to start bot', 'error');
+        await fetch(`${API}/bot/start`, { method: 'POST', credentials: 'include' });
+        window.open('/qr', '_blank');
+        showToast('Opening QR code...', 'success');
       } catch { showToast('Connection error', 'error'); }
     });
 
