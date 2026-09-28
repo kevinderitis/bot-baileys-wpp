@@ -176,6 +176,11 @@
     <header class="header">
       <h1>Arena Bot</h1>
       <div class="header-right">
+        <span id="headerStatus" style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:500">
+          <span id="headerStatusDot" style="width:10px;height:10px;border-radius:50%;background:var(--danger)"></span>
+          <span id="headerStatusText">Disconnected</span>
+        </span>
+        <a href="/qr" target="_blank" class="btn-success btn-small" id="headerConnectBtn" style="display:none;text-decoration:none">Connect</a>
         <span id="currentUser"></span>
         <button class="btn-danger btn-small" id="logoutBtn">Logout</button>
       </div>
@@ -262,15 +267,6 @@
           <div class="status-actions">
             <button class="btn-success" id="startBotBtn">Connect WhatsApp</button>
             <button class="btn-danger" id="stopBotBtn">Disconnect</button>
-          </div>
-        </div>
-
-        <div class="card" id="qrCard" style="display:none">
-          <div class="card-header"><h2>Connect WhatsApp</h2></div>
-          <div class="card-body" style="text-align:center">
-            <p style="color:var(--text-muted);margin-bottom:1rem">Scan this QR code with WhatsApp to link your account</p>
-            <img id="qrImage" src="" alt="QR Code" style="max-width:280px;width:100%;border-radius:8px;border:1px solid var(--border)">
-            <p style="color:var(--text-muted);margin-top:0.75rem;font-size:0.85rem">WhatsApp → Settings → Linked Devices → Link a Device</p>
           </div>
         </div>
 
@@ -473,25 +469,9 @@
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab + 'Panel').classList.add('active');
-        if (btn.dataset.tab === 'bot') {
-          loadBotStatus();
-          startQRPolling();
-        } else {
-          stopQRPolling();
-        }
+        if (btn.dataset.tab === 'bot') loadBotStatus();
       });
     });
-
-    let qrPollInterval = null;
-    function startQRPolling() {
-      stopQRPolling();
-      qrPollInterval = setInterval(() => {
-        loadBotStatus();
-      }, 3000);
-    }
-    function stopQRPolling() {
-      if (qrPollInterval) { clearInterval(qrPollInterval); qrPollInterval = null; }
-    }
 
     async function loadAll() {
       await Promise.all([loadBotStatus(), loadBotPurpose(), loadGroups(), loadContacts(), loadScheduled()]);
@@ -502,22 +482,6 @@
         const res = await fetch(`${API}/bot/status`, { credentials: 'include' });
         const data = await res.json();
         updateBotUI(data);
-        if (!data.connected && data.enabled) {
-          await loadQR();
-        }
-      } catch (err) { console.error(err); }
-    }
-
-    async function loadQR() {
-      try {
-        const res = await fetch(`${API}/bot/qr`, { credentials: 'include' });
-        const data = await res.json();
-        if (data.qr) {
-          document.getElementById('qrImage').src = data.qr;
-          document.getElementById('qrCard').style.display = 'block';
-        } else {
-          document.getElementById('qrCard').style.display = 'none';
-        }
       } catch (err) { console.error(err); }
     }
 
@@ -528,6 +492,9 @@
       const startBtn = document.getElementById('startBotBtn');
       const stopBtn = document.getElementById('stopBotBtn');
       const qrCard = document.getElementById('qrCard');
+      const headerDot = document.getElementById('headerStatusDot');
+      const headerText = document.getElementById('headerStatusText');
+      const headerConnect = document.getElementById('headerConnectBtn');
 
       if (data.connected) {
         icon.textContent = '🟢';
@@ -537,6 +504,9 @@
         startBtn.classList.add('hidden');
         stopBtn.classList.remove('hidden');
         qrCard.style.display = 'none';
+        headerDot.style.background = 'var(--success)';
+        headerText.textContent = 'Connected';
+        headerConnect.style.display = 'none';
       } else if (data.enabled) {
         icon.textContent = '🟡';
         icon.className = 'status-indicator offline';
@@ -545,6 +515,9 @@
         startBtn.classList.add('hidden');
         stopBtn.classList.remove('hidden');
         qrCard.style.display = 'block';
+        headerDot.style.background = 'var(--warning)';
+        headerText.textContent = 'Connecting...';
+        headerConnect.style.display = 'none';
       } else {
         icon.textContent = '🔴';
         icon.className = 'status-indicator offline';
@@ -552,7 +525,10 @@
         desc.textContent = 'Click Connect WhatsApp and scan the QR code';
         startBtn.classList.remove('hidden');
         stopBtn.classList.add('hidden');
-        qrCard.style.display = 'block';
+        qrCard.style.display = 'none';
+        headerDot.style.background = 'var(--danger)';
+        headerText.textContent = 'Disconnected';
+        headerConnect.style.display = 'inline-block';
       }
 
       if (data.config) {
