@@ -55,10 +55,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/qr', async (req, res) => {
-  const connected = getIsConnected();
-  const qr = getQR();
-
-  if (connected) {
+  if (getIsConnected()) {
     return res.send(`<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Arena Bot - Connected</title>
@@ -71,8 +68,7 @@ h2{color:#333;margin:10px 0}
 p{color:#666;margin:8px 0}
 .btn{display:inline-block;padding:10px 20px;border-radius:6px;text-decoration:none;color:white;margin-top:16px;border:none;font-size:14px;cursor:pointer}
 .btn-danger{background:#e53935}
-.btn-danger:hover{background:#c62828}
-a{color:#2196F3;text-decoration:none}</style>
+.btn-danger:hover{background:#c62828}</style>
 </head>
 <body>
 <div class="card">
@@ -90,28 +86,9 @@ a{color:#2196F3;text-decoration:none}</style>
 </html>`);
   }
 
+  const qr = getQR();
   if (!qr) {
-    return res.send(`<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Arena Bot - QR Code</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;flex-direction:column;text-align:center;padding:20px}
-.card{background:white;border-radius:12px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:400px;width:100%}
-h2{color:#333;margin:10px 0}
-p{color:#666;margin:8px 0}
-.spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
-</head>
-<body>
-<div class="card">
-<h2>Generating QR Code...</h2>
-<div class="spinner"></div>
-<p>Please wait, this will refresh automatically.</p>
-<script>setTimeout(()=>location.reload(),3000)</script>
-</div>
-</body>
-</html>`);
+    return res.status(404).send('No QR available yet. Please wait for the bot to generate one.');
   }
 
   const qrImage = await QR.toDataURL(qr);
