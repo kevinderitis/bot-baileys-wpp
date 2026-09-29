@@ -42,41 +42,40 @@ router.get('/me', authMiddleware, (req, res) => {
   res.json({ username: req.user.username });
 });
 
-function getGroups() {
+async function getGroups() {
   const sock = getSocket();
   if (!sock) return [];
-  const groups = [];
   try {
-    const chats = sock.chats;
-    if (chats && typeof chats.values === 'function') {
-      for (const [jid, chat] of chats) {
-        if (jid.endsWith('@g.us')) {
-          groups.push({
-            id: jid,
-            name: chat.name || chat.subject || 'Sin nombre',
-            participants: chat.participants?.length || 0,
-          });
-        }
-      }
-    }
+    const groups = await sock.groupFetchAllParticipating();
+    return Object.entries(groups).map(([jid, group]) => ({
+      id: jid,
+      name: group.subject || 'Sin nombre',
+      participants: group.participants?.length || 0,
+    }));
   } catch (e) {
-    logger.error({ err: e }, 'Error obteniendo grupos');
+    logger.error({ err: e }, 'Error getting groups');
+    return [];
   }
-  return groups;
 }
 
 function getContacts() {
   const sock = getSocket();
   if (!sock) return [];
   const contacts = [];
-  for (const [jid, contact] of Object.entries(sock.contacts || {})) {
-    if (jid.endsWith('@s.whatsapp.net') || jid.endsWith('@lid.g.whatsapp.net')) {
-      contacts.push({
-        id: jid,
-        name: contact.name || contact.notify || 'Sin nombre',
-        phone: contact.phone || jid.replace(/@.*$/, ''),
+  try {
+    if (sock.contacts && typeof sock.contacts.forEach === 'function') {
+      sock.contacts.forEach((contact, jid) => {
+        if (jid.endsWith('@s.whatsapp.net') || jid.endsWith('@lid.g.whatsapp.net')) {
+          contacts.push({
+            id: jid,
+            name: contact.name || contact.notify || 'Sin nombre',
+            phone: contact.phone || jid.replace(/@.*$/, ''),
+          });
+        }
       });
     }
+  } catch (e) {
+    logger.error({ err: e }, 'Error getting contacts');
   }
   return contacts;
 }
