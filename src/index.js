@@ -20,7 +20,15 @@ const __dirname = path.dirname(__filename);
 
 if (config.mongo.enabled) {
   try {
-    await mongoose.connect(config.mongo.uri);
+    await mongoose.connect(config.mongo.uri, {
+      serverSelectionTimeoutMS: 60000,
+      socketTimeoutMS: 60000,
+      connectTimeoutMS: 30000,
+      heartbeatFrequencyMS: 15000,
+      maxPoolSize: 5,
+      retryWrites: true,
+      retryReads: true,
+    });
     logger.info('Conectado a MongoDB');
   } catch (err) {
     logger.error({ err }, 'Error conectando a MongoDB');
@@ -28,6 +36,18 @@ if (config.mongo.enabled) {
 } else {
   logger.warn('MongoDB no configurado. El historial NO se persistirá.');
 }
+
+mongoose.connection.on('disconnected', () => {
+  logger.warn('MongoDB desconectado, intentando reconectar...');
+  setTimeout(() => {
+    mongoose.connect(config.mongo.uri, {
+      serverSelectionTimeoutMS: 60000,
+      socketTimeoutMS: 60000,
+      connectTimeoutMS: 30000,
+      heartbeatFrequencyMS: 15000,
+    }).catch(err => logger.error({ err }, 'Error reconectando MongoDB'));
+  }, 5000);
+});
 
 if (config.groq.enabled && config.mongo.enabled) {
   logger.info({ model: config.groq.model }, 'Groq API configurado');

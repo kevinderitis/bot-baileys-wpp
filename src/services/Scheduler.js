@@ -6,18 +6,27 @@ import logger from '../utils/logger.js';
 class Scheduler {
   constructor() {
     this.jobs = new Map();
+    this.cachedMessages = [];
+    this.lastCacheUpdate = null;
   }
 
   async start() {
     await this.loadJobs();
     cron.schedule('* * * * *', () => this.checkDue());
-    logger.info('Scheduler iniciado');
+    logger.info('Scheduler started');
   }
 
   async loadJobs() {
-    const messages = await ScheduledMessage.find({ isActive: true });
-    for (const msg of messages) {
-      this.scheduleJob(msg);
+    try {
+      const messages = await ScheduledMessage.find({ isActive: true }).lean();
+      this.cachedMessages = messages;
+      this.lastCacheUpdate = new Date();
+      for (const msg of messages) {
+        this.scheduleJob(msg);
+      }
+      logger.info({ count: messages.length }, 'Jobs loaded from MongoDB');
+    } catch (err) {
+      logger.error({ err }, 'Error loading jobs from MongoDB, using cache');
     }
   }
 
@@ -28,7 +37,6 @@ class Scheduler {
     const cronExpr = this.toCron(doc.schedule);
     const job = cron.schedule(cronExpr, () => this.execute(doc));
     this.jobs.set(doc._id.toString(), job);
-    logger.info({ id: doc._id, cron: cronExpr }, 'Job programado');
   }
 
   toCron(schedule) {
@@ -45,10 +53,7 @@ class Scheduler {
 
   async checkDue() {
     const now = new Date();
-    const due = await ScheduledMessage.find({
-      isActive: true,
-      nextRun: { $lte: now },
-    });
+    const due = this.cachedMessages.filter(m => m.isActive && m.nextRun && new Date(m.nextRun) <= now);
     for (const doc of due) {
       await this.execute(doc);
     }
@@ -57,7 +62,7 @@ class Scheduler {
   async execute(doc) {
     const sock = getSocket();
     if (!sock) {
-      logger.warn({ id: doc._id }, 'Socket no disponible, reintentando en 1 min');
+      logger.warn({ id: doc._id }, 'Socket not available, skipping');
       return;
     }
     try {
@@ -69,11 +74,15 @@ class Scheduler {
       }
       doc.lastSent = new Date();
       doc.nextRun = this.calculateNextRun(doc.schedule);
-      await doc.save();
       this.scheduleJob(doc);
-      logger.info({ id: doc._id, target: doc.targetId, hasImage: !!doc.image }, 'Mensaje programado enviado');
+      try {
+        await ScheduledMessage.findByIdAndUpdate(doc._id, { lastSent: doc.lastSent, nextRun: doc.nextRun });
+      } catch (err) {
+        logger.error({ err }, 'Error updating message in DB');
+      }
+      logger.info({ id: doc._id, target: doc.targetId, hasImage: !!doc.image }, 'Scheduled message sent');
     } catch (err) {
-      logger.error({ err, id: doc._id }, 'Error enviando mensaje programado');
+      logger.error({ err, id: doc._id }, 'Error sending scheduled message');
     }
   }
 
@@ -90,26 +99,26 @@ class Scheduler {
     });
     const parts = formatter.formatToParts(now);
     const get = t => parseInt(parts.find(p => p.type === t)?.value || '0');
-    const nowInTz = new Date(get('year'), get('month') - 1, get('day'), hh, mm, 0, 0);
+    const runDate = new Date(get('year'), get('month') - 1, get('day'), hh, mm, 0, 0);
 
     if (schedule.type === 'daily') {
-      if (nowInTz <= now) nowInTz.setDate(nowInTz.getDate() + 1);
+      if (runDate <= now) runDate.setDate(runDate.getDate() + 1);
     } else if (schedule.type === 'weekly') {
       const days = schedule.daysOfWeek || [now.getDay()];
       let nextDay = days.find(d => {
-        const candidate = new Date(nowInTz);
+        const candidate = new Date(runDate);
         const diff = (d - candidate.getDay() + 7) % 7;
         candidate.setDate(candidate.getDate() + diff);
         return candidate > now;
       });
       if (nextDay === undefined) nextDay = days[0];
-      const diff = (nextDay - nowInTz.getDay() + 7) % 7;
-      nowInTz.setDate(nowInTz.getDate() + diff);
-      if (nowInTz <= now) nowInTz.setDate(nowInTz.getDate() + 7);
+      const diff = (nextDay - runDate.getDay() + 7) % 7;
+      runDate.setDate(runDate.getDate() + diff);
+      if (runDate <= now) runDate.setDate(runDate.getDate() + 7);
     } else {
-      if (nowInTz <= now) nowInTz.setDate(nowInTz.getDate() + 1);
+      if (runDate <= now) runDate.setDate(runDate.getDate() + 1);
     }
-    return nowInTz;
+    return runDate;
   }
 
   refreshJob(doc) {
