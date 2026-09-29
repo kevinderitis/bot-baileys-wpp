@@ -23,7 +23,7 @@ export default {
 
   groq: {
     apiKey: process.env.GROQ_API_KEY || '',
-    enabled: !!process.env.GROQ_API_KEY,
+    enabled: process.env.GROQ_ENABLED === 'true',
     model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
     summaryModel: process.env.GROQ_SUMMARY_MODEL || 'llama-3.1-8b-instant',
     maxTokens: parseInt(process.env.GROQ_MAX_TOKENS, 10) || 1024,
