@@ -506,35 +506,17 @@
     }
 
     function updateConnectionUI(data) {
-      const icon = document.getElementById('waStatusIcon');
-      const title = document.getElementById('waStatusTitle');
-      const desc = document.getElementById('waStatusDesc');
-      const connectBtn = document.getElementById('waConnectBtn');
-      const disconnectBtn = document.getElementById('waDisconnectBtn');
-      const qrCard = document.getElementById('qrCard');
       const headerDot = document.getElementById('headerStatusDot');
       const headerText = document.getElementById('headerStatusText');
       const headerConnect = document.getElementById('headerConnectBtn');
       const menuConnect = document.getElementById('menuConnectBtn');
 
       if (data.connected) {
-        icon.textContent = '🟢';
-        title.textContent = 'WhatsApp Connected';
-        desc.textContent = 'Ready to send and receive messages';
-        connectBtn.style.display = 'none';
-        disconnectBtn.style.display = 'inline-block';
-        qrCard.style.display = 'none';
         headerDot.style.background = 'var(--success)';
         headerText.textContent = 'Connected';
         headerConnect.style.display = 'none';
         menuConnect.style.display = 'none';
       } else {
-        icon.textContent = '🔴';
-        title.textContent = 'WhatsApp Not Connected';
-        desc.textContent = 'Click Connect to open QR code';
-        connectBtn.style.display = 'inline-block';
-        disconnectBtn.style.display = 'none';
-        qrCard.style.display = 'none';
         headerDot.style.background = 'var(--danger)';
         headerText.textContent = 'Disconnected';
         headerConnect.style.display = 'inline-block';
@@ -581,14 +563,6 @@
         const res = await fetch(`${API}/bot/toggle`, { method: 'POST', credentials: 'include' });
         if (res.ok) { showToast('AI Bot toggled', 'success'); loadBotStatus(); }
         else showToast('Failed to toggle', 'error');
-      } catch { showToast('Connection error', 'error'); }
-    });
-
-    document.getElementById('waDisconnectBtn').addEventListener('click', async () => {
-      try {
-        const res = await fetch(`${API}/bot/stop`, { method: 'POST', credentials: 'include' });
-        if (res.ok) { showToast('WhatsApp disconnected', 'success'); loadBotStatus(); }
-        else showToast('Failed to disconnect', 'error');
       } catch { showToast('Connection error', 'error'); }
     });
 
