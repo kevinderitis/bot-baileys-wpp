@@ -80,8 +80,9 @@ function getContacts() {
   return contacts;
 }
 
-router.get('/groups', authMiddleware, (req, res) => {
-  res.json({ groups: getGroups() });
+router.get('/groups', authMiddleware, async (req, res) => {
+  const groups = await getGroups();
+  res.json({ groups });
 });
 
 router.get('/contacts', authMiddleware, (req, res) => {

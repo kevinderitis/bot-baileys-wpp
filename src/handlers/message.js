@@ -143,7 +143,7 @@ function makeHandler() {
         logger.error({ err }, 'Error marcando como leído');
       }
 
-      if (cm && config.groq.enabled) {
+      if (config.groq.enabled) {
         const promise = processWithGroq(number, body, remoteJid);
         pendingQueries.set(number, promise);
         try {
@@ -151,21 +151,6 @@ function makeHandler() {
         } finally {
           pendingQueries.delete(number);
           await drainBuffer(number, remoteJid);
-        }
-      } else {
-        const delay = getRandomDelay();
-        logger.info({ delayMs: Math.round(delay) }, 'Esperando antes de responder...');
-        await new Promise(r => setTimeout(r, delay));
-
-        const intent = classifyIntent(body);
-        const response = buildRuleResponse(intent);
-
-        try {
-          await simulateTyping(sock, remoteJid, response);
-          await sock.sendMessage(remoteJid, { text: response });
-          logger.info({ number, intent, response: response.slice(0, 80) }, 'MENSAJE SALIENTE');
-        } catch (err) {
-          logger.error({ err }, 'Error enviando mensaje (socket cerrado)');
         }
       }
     }
