@@ -489,6 +489,9 @@
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab + 'Panel').classList.add('active');
         if (btn.dataset.tab === 'bot') loadBotStatus();
+        if (btn.dataset.tab === 'scheduled') loadScheduled();
+        if (btn.dataset.tab === 'groups') loadGroups();
+        if (btn.dataset.tab === 'contacts') loadContacts();
       });
     });
 
@@ -628,13 +631,14 @@
     }
 
     async function loadScheduled() {
+      console.log('[Schedules] Starting request...');
       const tbody = document.getElementById('scheduledTable');
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="width:30px;height:30px;border-width:3px;margin:0 auto"></div><p style="color:var(--text-muted);margin-top:0.5rem">Loading...</p></td></tr>';
       try {
         const res = await fetch(`${API}/scheduled`, { credentials: 'include' });
-        console.log('[Schedules] Response status:', res.status);
+        console.log('[Schedules] Response received, status:', res.status);
         const data = await res.json();
-        console.log('[Schedules] Response data:', data);
+        console.log('[Schedules] Data:', data);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         renderScheduled(data.messages || []);
       } catch (err) {
@@ -827,13 +831,21 @@
         isActive: document.getElementById('fIsActive').checked,
       };
 
+      const isNew = !currentEditingId;
+      const tempId = 'temp_' + Date.now();
+
+      if (isNew) {
+        const tempMsg = { ...payload, _id: tempId, nextRun: new Date(Date.now() + 60000) };
+        addMessageToList(tempMsg);
+      } else {
+        updateMessageInList(currentEditingId, payload);
+      }
+
+      closeModal();
+      showToast(isNew ? 'Creating...' : 'Saving...', 'success');
+
       const url = currentEditingId ? `${API}/scheduled/${currentEditingId}` : `${API}/scheduled`;
       const method = currentEditingId ? 'PUT' : 'POST';
-
-      if (!currentEditingId) {
-        const tempMsg = { ...payload, _id: 'temp_' + Date.now(), nextRun: new Date(Date.now() + 60000) };
-        addMessageToList(tempMsg);
-      }
 
       try {
         const res = await fetch(url, {
@@ -844,23 +856,41 @@
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
-          if (!currentEditingId && data.message) {
-            removeMessageFromList(tempMsg._id);
+          if (isNew && data.message) {
+            removeMessageFromList(tempId);
             addMessageToList(data.message);
+          } else {
+            updateMessageInList(currentEditingId, data.message || payload);
           }
-          closeModal();
           showToast('Saved successfully', 'success');
         } else {
-          if (!currentEditingId) removeMessageFromList(tempMsg._id);
+          if (isNew) removeMessageFromList(tempId);
           showToast(data.error || 'Error saving', 'error');
-          closeModal();
         }
       } catch (err) {
-        if (!currentEditingId) removeMessageFromList(tempMsg._id);
+        if (isNew) removeMessageFromList(tempId);
         showToast('Connection error', 'error');
-        closeModal();
       }
     });
+
+    function updateMessageInList(id, msg) {
+      const row = document.getElementById(`row_${id}`);
+      if (row) {
+        row.innerHTML = `
+          <td>${esc(msg.name)}${msg.image ? ' 📷' : ''}</td>
+          <td>${esc(msg.targetName)}</td>
+          <td><span class="badge badge-info">${msg.schedule.type === 'daily' ? 'Daily' : msg.schedule.type === 'weekly' ? 'Weekly' : 'Once'}</span> ${msg.schedule.time}</td>
+          <td><span class="badge ${msg.isActive ? 'badge-success' : 'badge-danger'}">${msg.isActive ? 'Active' : 'Inactive'}</span></td>
+          <td>${msg.nextRun ? new Date(msg.nextRun).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-secondary btn-small" onclick='editScheduled(${JSON.stringify(msg)})'>Edit</button>
+              <button class="btn-secondary btn-small" onclick="testScheduled('${msg._id}')">Test</button>
+              <button class="btn-danger btn-small" onclick="deleteScheduled('${msg._id}')">Delete</button>
+            </div>
+          </td>`;
+      }
+    }
 
     function addMessageToList(msg) {
       const tbody = document.getElementById('scheduledTable');
