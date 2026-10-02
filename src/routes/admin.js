@@ -91,11 +91,11 @@ router.get('/contacts', authMiddleware, (req, res) => {
 
 router.get('/scheduled', authMiddleware, async (req, res) => {
   try {
-    const messages = await ScheduledMessage.find().sort({ createdAt: -1 }).lean();
+    const messages = await ScheduledMessage.find().sort({ createdAt: -1 }).lean().maxTimeMS(5000);
     res.json({ messages });
   } catch (err) {
     logger.error({ err }, 'Error fetching scheduled messages');
-    res.status(500).json({ error: 'Database error', messages: [] });
+    res.json({ messages: [] });
   }
 });
 
