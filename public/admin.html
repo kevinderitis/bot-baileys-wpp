@@ -632,12 +632,12 @@
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="width:30px;height:30px;border-width:3px;margin:0 auto"></div><p style="color:var(--text-muted);margin-top:0.5rem">Loading...</p></td></tr>';
       try {
         const res = await fetch(`${API}/scheduled`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { messages } = await res.json();
         renderScheduled(messages);
       } catch (err) {
-        console.error(err);
-        tbody.innerHTML = '';
-        document.getElementById('scheduledEmpty').classList.remove('hidden');
+        console.error('Error loading schedules:', err);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)">Failed to load. <button class="btn-secondary btn-small" onclick="loadScheduled()">Retry</button></td></tr>';
       }
     }
 
