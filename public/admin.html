@@ -628,11 +628,17 @@
     }
 
     async function loadScheduled() {
+      const tbody = document.getElementById('scheduledTable');
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner" style="width:30px;height:30px;border-width:3px;margin:0 auto"></div><p style="color:var(--text-muted);margin-top:0.5rem">Loading...</p></td></tr>';
       try {
         const res = await fetch(`${API}/scheduled`, { credentials: 'include' });
         const { messages } = await res.json();
         renderScheduled(messages);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '';
+        document.getElementById('scheduledEmpty').classList.remove('hidden');
+      }
     }
 
     function renderGroups(groups) {
@@ -834,8 +840,8 @@
           credentials: 'include',
           body: JSON.stringify(payload)
         });
+        const data = await res.json().catch(() => ({}));
         if (res.ok) {
-          const data = await res.json();
           if (!currentEditingId && data.message) {
             removeMessageFromList(tempMsg._id);
             addMessageToList(data.message);
@@ -844,12 +850,13 @@
           showToast('Saved successfully', 'success');
         } else {
           if (!currentEditingId) removeMessageFromList(tempMsg._id);
-          const err = await res.json();
-          showToast(err.error || 'Error', 'error');
+          showToast(data.error || 'Error saving', 'error');
+          closeModal();
         }
-      } catch {
+      } catch (err) {
         if (!currentEditingId) removeMessageFromList(tempMsg._id);
         showToast('Connection error', 'error');
+        closeModal();
       }
     });
 
