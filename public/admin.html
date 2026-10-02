@@ -666,6 +666,11 @@
     function renderScheduled(messages) {
       const tbody = document.getElementById('scheduledTable');
       const empty = document.getElementById('scheduledEmpty');
+      messages.sort((a, b) => {
+        if (!a.nextRun) return 1;
+        if (!b.nextRun) return -1;
+        return new Date(a.nextRun) - new Date(b.nextRun);
+      });
       if (!messages.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
       empty.classList.add('hidden');
       tbody.innerHTML = messages.map(m => `
@@ -815,17 +820,65 @@
       };
 
       const url = currentEditingId ? `${API}/scheduled/${currentEditingId}` : `${API}/scheduled`;
+      const method = currentEditingId ? 'PUT' : 'POST';
+
+      if (!currentEditingId) {
+        const tempMsg = { ...payload, _id: 'temp_' + Date.now(), nextRun: new Date(Date.now() + 60000) };
+        addMessageToList(tempMsg);
+      }
+
       try {
         const res = await fetch(url, {
-          method: currentEditingId ? 'PUT' : 'POST',
+          method,
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify(payload)
         });
-        if (res.ok) { closeModal(); loadScheduled(); showToast('Saved successfully', 'success'); }
-        else { const err = await res.json(); showToast(err.error || 'Error', 'error'); }
-      } catch { showToast('Connection error', 'error'); }
+        if (res.ok) {
+          const data = await res.json();
+          if (!currentEditingId && data.message) {
+            removeMessageFromList(tempMsg._id);
+            addMessageToList(data.message);
+          }
+          closeModal();
+          showToast('Saved successfully', 'success');
+        } else {
+          if (!currentEditingId) removeMessageFromList(tempMsg._id);
+          const err = await res.json();
+          showToast(err.error || 'Error', 'error');
+        }
+      } catch {
+        if (!currentEditingId) removeMessageFromList(tempMsg._id);
+        showToast('Connection error', 'error');
+      }
     });
+
+    function addMessageToList(msg) {
+      const tbody = document.getElementById('scheduledTable');
+      const empty = document.getElementById('scheduledEmpty');
+      empty.classList.add('hidden');
+      const row = document.createElement('tr');
+      row.id = `row_${msg._id}`;
+      row.innerHTML = `
+        <td>${esc(msg.name)}${msg.image ? ' 📷' : ''}</td>
+        <td>${esc(msg.targetName)}</td>
+        <td><span class="badge badge-info">${msg.schedule.type === 'daily' ? 'Daily' : msg.schedule.type === 'weekly' ? 'Weekly' : 'Once'}</span> ${msg.schedule.time}</td>
+        <td><span class="badge ${msg.isActive ? 'badge-success' : 'badge-danger'}">${msg.isActive ? 'Active' : 'Inactive'}</span></td>
+        <td>${msg.nextRun ? new Date(msg.nextRun).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+        <td>
+          <div class="actions">
+            <button class="btn-secondary btn-small" onclick="editScheduled('${msg._id}')">Edit</button>
+            <button class="btn-secondary btn-small" onclick="testScheduled('${msg._id}')">Test</button>
+            <button class="btn-danger btn-small" onclick="deleteScheduled('${msg._id}')">Delete</button>
+          </div>
+        </td>`;
+      tbody.insertBefore(row, tbody.firstChild);
+    }
+
+    function removeMessageFromList(id) {
+      const row = document.getElementById(`row_${id}`);
+      if (row) row.remove();
+    }
 
     async function editScheduled(id) {
       try {
@@ -847,11 +900,12 @@
 
     async function deleteScheduled(id) {
       if (!confirm('Delete this scheduled message? The image will also be removed from the database.')) return;
+      removeMessageFromList(id);
+      showToast('Deleted', 'success');
       try {
         const res = await fetch(`${API}/scheduled/${id}`, { method: 'DELETE', credentials: 'include' });
-        if (res.ok) { loadScheduled(); showToast('Deleted', 'success'); }
-        else showToast('Error deleting', 'error');
-      } catch { showToast('Connection error', 'error'); }
+        if (!res.ok) { showToast('Error deleting', 'error'); loadScheduled(); }
+      } catch { showToast('Connection error', 'error'); loadScheduled(); }
     }
 
     function showToast(msg, type = 'success') {
