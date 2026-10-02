@@ -843,7 +843,7 @@
       }
 
       closeModal();
-      showToast(isNew ? 'Creating...' : 'Saving...', 'success');
+      showToast(isNew ? 'Creating...' : 'Editing...', 'success');
 
       const url = editId ? `${API}/scheduled/${editId}` : `${API}/scheduled`;
       const method = editId ? 'PUT' : 'POST';
@@ -861,7 +861,8 @@
             removeMessageFromList(tempId);
             addMessageToList(data.message);
           } else if (!isNew) {
-            updateMessageInList(editId, data.message || payload);
+            const updated = data.message || { ...payload, _id: editId };
+            updateMessageInList(editId, updated);
           }
           showToast('Saved successfully', 'success');
         } else {
