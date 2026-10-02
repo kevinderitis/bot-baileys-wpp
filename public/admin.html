@@ -906,7 +906,7 @@
         <td>${msg.nextRun ? new Date(msg.nextRun).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
         <td>
           <div class="actions">
-            <button class="btn-secondary btn-small" onclick="editScheduled('${msg._id}')">Edit</button>
+            <button class="btn-secondary btn-small" onclick='editScheduled(${JSON.stringify(msg)})'>Edit</button>
             <button class="btn-secondary btn-small" onclick="testScheduled('${msg._id}')">Test</button>
             <button class="btn-danger btn-small" onclick="deleteScheduled('${msg._id}')">Delete</button>
           </div>
