@@ -145,6 +145,9 @@ app.listen(config.server.port, () => {
 
 const handler = makeHandler();
 setMessageHandler(handler);
-await scheduler.start();
 
 startBot();
+
+scheduler.start().catch(err => {
+  logger.error({ err }, 'Error starting scheduler');
+});
