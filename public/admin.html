@@ -832,20 +832,21 @@
       };
 
       const isNew = !currentEditingId;
+      const editId = currentEditingId;
       const tempId = 'temp_' + Date.now();
 
       if (isNew) {
         const tempMsg = { ...payload, _id: tempId, nextRun: new Date(Date.now() + 60000) };
         addMessageToList(tempMsg);
       } else {
-        updateMessageInList(currentEditingId, payload);
+        updateMessageInList(editId, payload);
       }
 
       closeModal();
       showToast(isNew ? 'Creating...' : 'Saving...', 'success');
 
-      const url = currentEditingId ? `${API}/scheduled/${currentEditingId}` : `${API}/scheduled`;
-      const method = currentEditingId ? 'PUT' : 'POST';
+      const url = editId ? `${API}/scheduled/${editId}` : `${API}/scheduled`;
+      const method = editId ? 'PUT' : 'POST';
 
       try {
         const res = await fetch(url, {
@@ -859,8 +860,8 @@
           if (isNew && data.message) {
             removeMessageFromList(tempId);
             addMessageToList(data.message);
-          } else {
-            updateMessageInList(currentEditingId, data.message || payload);
+          } else if (!isNew) {
+            updateMessageInList(editId, data.message || payload);
           }
           showToast('Saved successfully', 'success');
         } else {
