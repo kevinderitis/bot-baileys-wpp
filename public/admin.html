@@ -690,7 +690,7 @@
           <td>${m.nextRun ? new Date(m.nextRun).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
           <td>
             <div class="actions">
-              <button class="btn-secondary btn-small" onclick="editScheduled('${m._id}')">Edit</button>
+              <button class="btn-secondary btn-small" onclick='editScheduled(${JSON.stringify(m)})'>Edit</button>
               <button class="btn-secondary btn-small" onclick="testScheduled('${m._id}')">Test</button>
               <button class="btn-danger btn-small" onclick="deleteScheduled('${m._id}')">Delete</button>
             </div>
@@ -889,13 +889,8 @@
       if (row) row.remove();
     }
 
-    async function editScheduled(id) {
-      try {
-        const res = await fetch(`${API}/scheduled`, { credentials: 'include' });
-        const { messages } = await res.json();
-        const msg = messages.find(m => m._id === id);
-        if (msg) openModal(true, msg);
-      } catch { showToast('Error loading', 'error'); }
+    function editScheduled(msg) {
+      openModal(true, msg);
     }
 
     async function testScheduled(id) {
