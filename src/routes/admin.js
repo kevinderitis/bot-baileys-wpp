@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getSocket, getRealPhone, getIsConnected, startBot, stopBot, isBotEnabled, getQR } from '../socket.js';
 import ScheduledMessage from '../models/ScheduledMessage.js';
+import ScheduledImage from '../models/ScheduledImage.js';
 import BotSettings from '../models/BotSettings.js';
 import config from '../config.js';
 import logger from '../utils/logger.js';
@@ -104,15 +105,24 @@ router.post('/scheduled', authMiddleware, async (req, res) => {
   if (!name || !message || !targetType || !targetId || !targetName || !schedule) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
+  let imageId = null;
+  if (image) {
+    const imgDoc = await ScheduledImage.create({ data: image, mimeType: imageMimeType || 'image/jpeg' });
+    imageId = imgDoc._id;
+  }
   const nextRun = calculateNextRun(schedule);
-  const doc = await ScheduledMessage.create({ name, message, image: image || '', imageMimeType: imageMimeType || '', targetType, targetId, targetName, schedule, nextRun });
+  const doc = await ScheduledMessage.create({ name, message, imageId, targetType, targetId, targetName, schedule, nextRun });
   res.json({ message: doc });
 });
 
 router.put('/scheduled/:id', authMiddleware, async (req, res) => {
   const { name, message, image, imageMimeType, targetType, targetId, targetName, schedule, isActive } = req.body;
-  const update = { name, message, image: image || '', imageMimeType: imageMimeType || '', targetType, targetId, targetName, schedule, isActive };
+  const update = { name, message, targetType, targetId, targetName, schedule, isActive };
   if (schedule) update.nextRun = calculateNextRun(schedule);
+  if (image) {
+    const imgDoc = await ScheduledImage.create({ data: image, mimeType: imageMimeType || 'image/jpeg' });
+    update.imageId = imgDoc._id;
+  }
   const doc = await ScheduledMessage.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!doc) return res.status(404).json({ error: 'No encontrado' });
   res.json({ message: doc });
@@ -123,11 +133,31 @@ router.delete('/scheduled/:id', authMiddleware, async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/scheduled/:id/test', authMiddleware, async (req, res) => {
+router.get('/scheduled/:id/test', authMiddleware, async (req, res) => {
   const doc = await ScheduledMessage.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: 'No encontrado' });
-  await sendToTarget(doc.targetType, doc.targetId, doc.message, doc.image, doc.imageMimeType);
+  let imageData = null;
+  let imageMime = 'image/jpeg';
+  if (doc.imageId) {
+    const img = await ScheduledImage.findById(doc.imageId);
+    if (img) {
+      imageData = img.data;
+      imageMime = img.mimeType;
+    }
+  }
+  await sendToTarget(doc.targetType, doc.targetId, doc.message, imageData, imageMime);
   res.json({ ok: true });
+});
+
+router.get('/image/:id', authMiddleware, async (req, res) => {
+  try {
+    const img = await ScheduledImage.findById(req.params.id);
+    if (!img) return res.status(404).json({ error: 'Image not found' });
+    res.json({ data: img.data, mimeType: img.mimeType });
+  } catch (err) {
+    logger.error({ err }, 'Error fetching image');
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 async function sendToTarget(targetType, targetId, text, image = '', imageMimeType = '') {

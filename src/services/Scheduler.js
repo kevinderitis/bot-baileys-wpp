@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import ScheduledMessage from '../models/ScheduledMessage.js';
+import ScheduledImage from '../models/ScheduledImage.js';
 import { getSocket } from '../socket.js';
 import logger from '../utils/logger.js';
 
@@ -66,9 +67,22 @@ class Scheduler {
       return;
     }
     try {
-      if (doc.image) {
-        const buffer = Buffer.from(doc.image, 'base64');
-        await sock.sendMessage(doc.targetId, { image: buffer, caption: doc.message || '', mimetype: doc.imageMimeType || 'image/jpeg' });
+      let imageData = null;
+      let imageMime = 'image/jpeg';
+      if (doc.imageId) {
+        try {
+          const img = await ScheduledImage.findById(doc.imageId).lean();
+          if (img) {
+            imageData = img.data;
+            imageMime = img.mimeType;
+          }
+        } catch (err) {
+          logger.error({ err }, 'Error loading image');
+        }
+      }
+      if (imageData) {
+        const buffer = Buffer.from(imageData, 'base64');
+        await sock.sendMessage(doc.targetId, { image: buffer, caption: doc.message || '', mimetype: imageMime });
       } else {
         await sock.sendMessage(doc.targetId, { text: doc.message });
       }
@@ -80,7 +94,7 @@ class Scheduler {
       } catch (err) {
         logger.error({ err }, 'Error updating message in DB');
       }
-      logger.info({ id: doc._id, target: doc.targetId, hasImage: !!doc.image }, 'Scheduled message sent');
+      logger.info({ id: doc._id, target: doc.targetId, hasImage: !!imageData }, 'Scheduled message sent');
     } catch (err) {
       logger.error({ err, id: doc._id }, 'Error sending scheduled message');
     }
