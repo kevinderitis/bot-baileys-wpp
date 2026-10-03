@@ -929,6 +929,9 @@
     function editScheduled(msg) {
       openModal(true, msg);
       if (msg.imageId) {
+        document.getElementById('imagePreview').src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTQ5NDk0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Mb2FkaW5nLi4uPC90ZXh0Pjwvc3ZnPg==';
+        document.getElementById('imagePreviewWrap').classList.remove('hidden');
+        document.getElementById('imageUpload').style.display = 'none';
         fetch(`${API}/image/${msg.imageId}`, { credentials: 'include' })
           .then(res => res.json())
           .then(data => {
@@ -936,8 +939,6 @@
               uploadedImageBase64 = data.data;
               uploadedImageMime = data.mimeType || 'image/jpeg';
               document.getElementById('imagePreview').src = `data:${uploadedImageMime};base64,${uploadedImageBase64}`;
-              document.getElementById('imagePreviewWrap').classList.remove('hidden');
-              document.getElementById('imageUpload').style.display = 'none';
             }
           })
           .catch(err => console.error('Error loading image:', err));
