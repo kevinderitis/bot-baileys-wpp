@@ -927,19 +927,20 @@
     }
 
     function editScheduled(msg) {
+      openModal(true, msg);
       if (msg.imageId) {
         fetch(`${API}/image/${msg.imageId}`, { credentials: 'include' })
           .then(res => res.json())
           .then(data => {
             if (data.data) {
-              msg.image = data.data;
-              msg.imageMimeType = data.mimeType;
+              uploadedImageBase64 = data.data;
+              uploadedImageMime = data.mimeType || 'image/jpeg';
+              document.getElementById('imagePreview').src = `data:${uploadedImageMime};base64,${uploadedImageBase64}`;
+              document.getElementById('imagePreviewWrap').classList.remove('hidden');
+              document.getElementById('imageUpload').style.display = 'none';
             }
-            openModal(true, msg);
           })
-          .catch(() => openModal(true, msg));
-      } else {
-        openModal(true, msg);
+          .catch(err => console.error('Error loading image:', err));
       }
     }
 
