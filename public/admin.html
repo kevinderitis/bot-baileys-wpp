@@ -834,6 +834,8 @@
         isActive: document.getElementById('fIsActive').checked,
       };
 
+      console.log('[Schedules] Creating with payload:', { ...payload, image: payload.image ? '[BASE64]' : null });
+
       const isNew = !currentEditingId;
       const editId = currentEditingId;
       const tempId = 'temp_' + Date.now();

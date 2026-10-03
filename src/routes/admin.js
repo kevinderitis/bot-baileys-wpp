@@ -102,6 +102,7 @@ router.get('/scheduled', authMiddleware, async (req, res) => {
 
 router.post('/scheduled', authMiddleware, async (req, res) => {
   const { name, message, image, imageMimeType, targetType, targetId, targetName, schedule } = req.body;
+  logger.info({ name, hasImage: !!image, targetType, targetId }, 'Creating scheduled message');
   if (!name || !message || !targetType || !targetId || !targetName || !schedule) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
@@ -109,9 +110,11 @@ router.post('/scheduled', authMiddleware, async (req, res) => {
   if (image) {
     const imgDoc = await ScheduledImage.create({ data: image, mimeType: imageMimeType || 'image/jpeg' });
     imageId = imgDoc._id;
+    logger.info({ imageId }, 'Image created');
   }
   const nextRun = calculateNextRun(schedule);
   const doc = await ScheduledMessage.create({ name, message, imageId, targetType, targetId, targetName, schedule, nextRun });
+  logger.info({ id: doc._id }, 'Scheduled message created');
   res.json({ message: doc });
 });
 
