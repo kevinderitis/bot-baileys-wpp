@@ -55,8 +55,10 @@ class Scheduler {
   async checkDue() {
     const now = new Date();
     const due = this.cachedMessages.filter(m => m.isActive && m.nextRun && new Date(m.nextRun) <= now);
+    const activeCount = this.cachedMessages.filter(m => m.isActive).length;
+    logger.info({ time: now.toISOString(), dueCount: due.length, activeCount, totalCached: this.cachedMessages.length }, 'Scheduler check');
     if (due.length > 0) {
-      logger.info({ count: due.length, messages: due.map(m => ({ id: m._id, name: m.name, target: m.targetName })) }, 'Due messages found');
+      logger.info({ messages: due.map(m => ({ id: m._id, name: m.name, target: m.targetName })) }, 'Due messages found');
     }
     for (const doc of due) {
       await this.execute(doc);
