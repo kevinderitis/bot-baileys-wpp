@@ -141,8 +141,13 @@ class Scheduler {
       if (runDate <= nowInTz) runDate.setDate(runDate.getDate() + 1);
     }
 
-    const offset = -nowInTz.getTimezoneOffset() * 60000;
-    return new Date(runDate.getTime() - offset);
+    const tzOffsetMs = (() => {
+      const utcStr = now.toLocaleString('en-US', { timeZone: 'UTC' });
+      const tzStr = now.toLocaleString('en-US', { timeZone: tz });
+      return (new Date(utcStr) - new Date(tzStr));
+    })();
+
+    return new Date(runDate.getTime() + tzOffsetMs);
   }
 
   refreshJob(doc) {
