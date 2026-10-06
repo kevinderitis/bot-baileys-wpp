@@ -53,6 +53,13 @@ class Scheduler {
   }
 
   async checkDue() {
+    try {
+      const fresh = await ScheduledMessage.find({ isActive: true }).lean().maxTimeMS(5000);
+      this.cachedMessages = fresh;
+      this.lastCacheUpdate = new Date();
+    } catch (err) {
+      logger.error({ err }, 'Error refreshing cache, using stale data');
+    }
     const now = new Date();
     const due = this.cachedMessages.filter(m => m.isActive && m.nextRun && new Date(m.nextRun) <= now);
     const activeCount = this.cachedMessages.filter(m => m.isActive).length;
