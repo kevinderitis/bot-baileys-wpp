@@ -136,7 +136,7 @@ router.delete('/scheduled/:id', authMiddleware, async (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/scheduled/:id/test', authMiddleware, async (req, res) => {
+router.post('/scheduled/:id/test', authMiddleware, async (req, res) => {
   const doc = await ScheduledMessage.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: 'No encontrado' });
   let imageData = null;
