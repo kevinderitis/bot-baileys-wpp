@@ -176,6 +176,7 @@
     <header class="header">
       <h1>Arena Bot</h1>
       <div class="header-right">
+        <span id="headerClock" style="font-size:0.8rem;color:var(--text-muted);font-family:monospace"></span>
         <span id="headerStatus" style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:500">
           <span id="headerStatusDot" style="width:10px;height:10px;border-radius:50%;background:var(--danger)"></span>
           <span id="headerStatusText">Disconnected</span>
@@ -468,6 +469,15 @@
       await fetch(`${API}/logout`, { method: 'POST', credentials: 'include' });
       showLogin();
     });
+
+    function updateClock() {
+      const now = new Date();
+      const bangkok = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+      const local = now.toLocaleTimeString();
+      document.getElementById('headerClock').textContent = `BKK ${bangkok.toLocaleTimeString()} | Local ${local}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
     document.getElementById('hamburgerBtn').addEventListener('click', (e) => {
       e.stopPropagation();

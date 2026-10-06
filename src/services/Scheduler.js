@@ -56,7 +56,15 @@ class Scheduler {
     const now = new Date();
     const due = this.cachedMessages.filter(m => m.isActive && m.nextRun && new Date(m.nextRun) <= now);
     const activeCount = this.cachedMessages.filter(m => m.isActive).length;
-    logger.info({ time: now.toISOString(), dueCount: due.length, activeCount, totalCached: this.cachedMessages.length }, 'Scheduler check');
+    const nowBangkok = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+    logger.info({
+      time: now.toISOString(),
+      timeBangkok: nowBangkok.toISOString(),
+      dueCount: due.length,
+      activeCount,
+      totalCached: this.cachedMessages.length,
+      nextRuns: this.cachedMessages.map(m => ({ id: m._id, name: m.name, nextRun: m.nextRun, isActive: m.isActive })),
+    }, 'Scheduler check');
     if (due.length > 0) {
       logger.info({ messages: due.map(m => ({ id: m._id, name: m.name, target: m.targetName })) }, 'Due messages found');
     }
