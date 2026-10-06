@@ -55,6 +55,9 @@ class Scheduler {
   async checkDue() {
     const now = new Date();
     const due = this.cachedMessages.filter(m => m.isActive && m.nextRun && new Date(m.nextRun) <= now);
+    if (due.length > 0) {
+      logger.info({ count: due.length, messages: due.map(m => ({ id: m._id, name: m.name, target: m.targetName })) }, 'Due messages found');
+    }
     for (const doc of due) {
       await this.execute(doc);
     }
@@ -63,9 +66,10 @@ class Scheduler {
   async execute(doc) {
     const sock = getSocket();
     if (!sock) {
-      logger.warn({ id: doc._id }, 'Socket not available, skipping');
+      logger.warn({ id: doc._id, name: doc.name }, 'Socket not available, skipping');
       return;
     }
+    logger.info({ id: doc._id, name: doc.name, target: doc.targetName, targetId: doc.targetId, hasImage: !!doc.imageId }, 'Attempting to send scheduled message');
     try {
       let imageData = null;
       let imageMime = 'image/jpeg';
@@ -77,7 +81,7 @@ class Scheduler {
             imageMime = img.mimeType;
           }
         } catch (err) {
-          logger.error({ err }, 'Error loading image');
+          logger.error({ err, id: doc._id }, 'Error loading image');
         }
       }
       if (imageData) {
@@ -94,9 +98,9 @@ class Scheduler {
       } catch (err) {
         logger.error({ err }, 'Error updating message in DB');
       }
-      logger.info({ id: doc._id, target: doc.targetId, hasImage: !!imageData }, 'Scheduled message sent');
+      logger.info({ id: doc._id, name: doc.name, target: doc.targetName, nextRun: doc.nextRun }, 'Scheduled message sent successfully');
     } catch (err) {
-      logger.error({ err, id: doc._id }, 'Error sending scheduled message');
+      logger.error({ err, id: doc._id, name: doc.name, target: doc.targetName }, 'Error sending scheduled message');
     }
   }
 
