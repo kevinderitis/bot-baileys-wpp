@@ -140,7 +140,9 @@ class Scheduler {
     } else {
       if (runDate <= nowInTz) runDate.setDate(runDate.getDate() + 1);
     }
-    return runDate;
+
+    const offset = -nowInTz.getTimezoneOffset() * 60000;
+    return new Date(runDate.getTime() - offset);
   }
 
   refreshJob(doc) {
