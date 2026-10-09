@@ -110,6 +110,11 @@ class Scheduler {
       doc.lastSent = new Date();
       doc.nextRun = this.calculateNextRun(doc.schedule);
       this.scheduleJob(doc);
+      const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
+      if (cachedIdx !== -1) {
+        this.cachedMessages[cachedIdx].nextRun = doc.nextRun;
+        this.cachedMessages[cachedIdx].lastSent = doc.lastSent;
+      }
       try {
         await ScheduledMessage.findByIdAndUpdate(doc._id, { lastSent: doc.lastSent, nextRun: doc.nextRun });
       } catch (err) {
