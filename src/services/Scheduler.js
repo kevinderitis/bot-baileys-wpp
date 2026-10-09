@@ -87,6 +87,12 @@ class Scheduler {
       return;
     }
     logger.info({ id: doc._id, name: doc.name, target: doc.targetName, targetId: doc.targetId, hasImage: !!doc.imageId }, 'Attempting to send scheduled message');
+    const nextRun = this.calculateNextRun(doc.schedule);
+    const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
+    if (cachedIdx !== -1) {
+      this.cachedMessages[cachedIdx].nextRun = nextRun;
+      this.cachedMessages[cachedIdx].lastSent = new Date();
+    }
     try {
       let imageData = null;
       let imageMime = 'image/jpeg';
@@ -107,22 +113,18 @@ class Scheduler {
       } else {
         await sock.sendMessage(doc.targetId, { text: doc.message });
       }
-      doc.lastSent = new Date();
-      doc.nextRun = this.calculateNextRun(doc.schedule);
       this.scheduleJob(doc);
-      const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
-      if (cachedIdx !== -1) {
-        this.cachedMessages[cachedIdx].nextRun = doc.nextRun;
-        this.cachedMessages[cachedIdx].lastSent = doc.lastSent;
-      }
       try {
-        await ScheduledMessage.findByIdAndUpdate(doc._id, { lastSent: doc.lastSent, nextRun: doc.nextRun });
+        await ScheduledMessage.findByIdAndUpdate(doc._id, { lastSent: new Date(), nextRun });
       } catch (err) {
         logger.error({ err }, 'Error updating message in DB');
       }
-      logger.info({ id: doc._id, name: doc.name, target: doc.targetName, nextRun: doc.nextRun }, 'Scheduled message sent successfully');
+      logger.info({ id: doc._id, name: doc.name, target: doc.targetName, nextRun }, 'Scheduled message sent successfully');
     } catch (err) {
       logger.error({ err, id: doc._id, name: doc.name, target: doc.targetName }, 'Error sending scheduled message');
+      if (cachedIdx !== -1) {
+        this.cachedMessages[cachedIdx].nextRun = doc.nextRun;
+      }
     }
   }
 
