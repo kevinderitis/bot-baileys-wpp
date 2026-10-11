@@ -22,35 +22,13 @@ class Scheduler {
       const messages = await ScheduledMessage.find({ isActive: true }).lean();
       this.cachedMessages = messages;
       this.lastCacheUpdate = new Date();
-      for (const msg of messages) {
-        this.scheduleJob(msg);
-      }
       logger.info({ count: messages.length }, 'Jobs loaded from MongoDB');
     } catch (err) {
       logger.error({ err }, 'Error loading jobs from MongoDB, using cache');
     }
   }
 
-  scheduleJob(doc) {
-    if (this.jobs.has(doc._id.toString())) {
-      this.jobs.get(doc._id.toString()).stop();
-    }
-    const cronExpr = this.toCron(doc.schedule);
-    const job = cron.schedule(cronExpr, () => this.execute(doc));
-    this.jobs.set(doc._id.toString(), job);
-  }
 
-  toCron(schedule) {
-    const [hh, mm] = schedule.time.split(':').map(Number);
-    if (schedule.type === 'daily') {
-      return `${mm} ${hh} * * *`;
-    }
-    if (schedule.type === 'weekly') {
-      const days = (schedule.daysOfWeek || []).join(',');
-      return `${mm} ${hh} * * ${days}`;
-    }
-    return `${mm} ${hh} * * *`;
-  }
 
   async checkDue() {
     try {
@@ -87,18 +65,45 @@ class Scheduler {
       return;
     }
     logger.info({ id: doc._id, name: doc.name, target: doc.targetName, targetId: doc.targetId, hasImage: !!doc.imageId }, 'Attempting to send scheduled message');
-    const nextRun = this.calculateNextRun(doc.schedule);
-    const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
-    if (cachedIdx !== -1) {
-      this.cachedMessages[cachedIdx].nextRun = nextRun;
-      this.cachedMessages[cachedIdx].lastSent = new Date();
-    }
     try {
+      const fresh = await ScheduledMessage.findById(doc._id).lean().maxTimeMS(5000);
+      if (!fresh) {
+        logger.warn({ id: doc._id }, 'Message not found in DB, skipping');
+        return;
+      }
+      if (!fresh.isActive) {
+        logger.info({ id: doc._id }, 'Message is inactive, skipping');
+        return;
+      }
+      const now = new Date();
+      if (!fresh.nextRun || new Date(fresh.nextRun) > now) {
+        logger.info({ id: doc._id, nextRun: fresh.nextRun, now: now.toISOString() }, 'Message no longer due (DB check), skipping');
+        const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
+        if (cachedIdx !== -1) {
+          this.cachedMessages[cachedIdx].nextRun = fresh.nextRun;
+        }
+        return;
+      }
+      const nextRun = this.calculateNextRun(fresh.schedule);
+      const updateResult = await ScheduledMessage.findByIdAndUpdate(
+        doc._id,
+        { $set: { lastSent: now, nextRun } },
+        { new: true }
+      ).maxTimeMS(5000);
+      if (!updateResult) {
+        logger.warn({ id: doc._id }, 'Failed to update nextRun in DB, skipping send');
+        return;
+      }
+      const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
+      if (cachedIdx !== -1) {
+        this.cachedMessages[cachedIdx].nextRun = nextRun;
+        this.cachedMessages[cachedIdx].lastSent = now;
+      }
       let imageData = null;
       let imageMime = 'image/jpeg';
-      if (doc.imageId) {
+      if (fresh.imageId) {
         try {
-          const img = await ScheduledImage.findById(doc.imageId).lean();
+          const img = await ScheduledImage.findById(fresh.imageId).lean();
           if (img) {
             imageData = img.data;
             imageMime = img.mimeType;
@@ -113,18 +118,9 @@ class Scheduler {
       } else {
         await sock.sendMessage(doc.targetId, { text: doc.message });
       }
-      this.scheduleJob(doc);
-      try {
-        await ScheduledMessage.findByIdAndUpdate(doc._id, { lastSent: new Date(), nextRun });
-      } catch (err) {
-        logger.error({ err }, 'Error updating message in DB');
-      }
       logger.info({ id: doc._id, name: doc.name, target: doc.targetName, nextRun }, 'Scheduled message sent successfully');
     } catch (err) {
       logger.error({ err, id: doc._id, name: doc.name, target: doc.targetName }, 'Error sending scheduled message');
-      if (cachedIdx !== -1) {
-        this.cachedMessages[cachedIdx].nextRun = doc.nextRun;
-      }
     }
   }
 
