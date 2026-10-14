@@ -75,30 +75,33 @@ class Scheduler {
         logger.info({ id: doc._id }, 'Message is inactive, skipping');
         return;
       }
+      if (fresh.sending) {
+        logger.warn({ id: doc._id }, 'Message is already being sent, skipping duplicate');
+        return;
+      }
+      if (fresh.lastSent) {
+        const lastSent = new Date(fresh.lastSent);
+        const diffMinutes = (now - lastSent) / 60000;
+        if (diffMinutes < 2) {
+          logger.warn({ id: doc._id, lastSent: fresh.lastSent, diffMinutes }, 'Message was sent less than 2 minutes ago, skipping');
+          return;
+        }
+      }
       const now = new Date();
       if (!fresh.nextRun || new Date(fresh.nextRun) > now) {
         logger.info({ id: doc._id, nextRun: fresh.nextRun, now: now.toISOString() }, 'Message no longer due (DB check), skipping');
-        const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
-        if (cachedIdx !== -1) {
-          this.cachedMessages[cachedIdx].nextRun = fresh.nextRun;
-        }
+        return;
+      }
+      const locked = await ScheduledMessage.findOneAndUpdate(
+        { _id: doc._id, sending: { $ne: true } },
+        { $set: { sending: true } },
+        { new: true }
+      ).maxTimeMS(5000);
+      if (!locked) {
+        logger.warn({ id: doc._id }, 'Failed to lock message for sending, skipping');
         return;
       }
       const nextRun = this.calculateNextRun(fresh.schedule);
-      const updateResult = await ScheduledMessage.findByIdAndUpdate(
-        doc._id,
-        { $set: { lastSent: now, nextRun } },
-        { new: true }
-      ).maxTimeMS(5000);
-      if (!updateResult) {
-        logger.warn({ id: doc._id }, 'Failed to update nextRun in DB, skipping send');
-        return;
-      }
-      const cachedIdx = this.cachedMessages.findIndex(m => m._id.toString() === doc._id.toString());
-      if (cachedIdx !== -1) {
-        this.cachedMessages[cachedIdx].nextRun = nextRun;
-        this.cachedMessages[cachedIdx].lastSent = now;
-      }
       let imageData = null;
       let imageMime = 'image/jpeg';
       if (fresh.imageId) {
@@ -112,15 +115,21 @@ class Scheduler {
           logger.error({ err, id: doc._id }, 'Error loading image');
         }
       }
-      if (imageData) {
-        const buffer = Buffer.from(imageData, 'base64');
-        await sock.sendMessage(doc.targetId, { image: buffer, caption: doc.message || '', mimetype: imageMime });
-      } else {
-        await sock.sendMessage(doc.targetId, { text: doc.message });
+      try {
+        if (imageData) {
+          const buffer = Buffer.from(imageData, 'base64');
+          await sock.sendMessage(doc.targetId, { image: buffer, caption: doc.message || '', mimetype: imageMime });
+        } else {
+          await sock.sendMessage(doc.targetId, { text: doc.message });
+        }
+        await ScheduledMessage.findByIdAndUpdate(doc._id, { $set: { lastSent: new Date(), nextRun }, $unset: { sending: '' } }).maxTimeMS(5000);
+        logger.info({ id: doc._id, name: doc.name, target: doc.targetName, nextRun }, 'Scheduled message sent successfully');
+      } catch (sendErr) {
+        logger.error({ err: sendErr, id: doc._id }, 'Error sending message, will retry next minute');
+        await ScheduledMessage.findByIdAndUpdate(doc._id, { $unset: { sending: '' } }).maxTimeMS(5000);
       }
-      logger.info({ id: doc._id, name: doc.name, target: doc.targetName, nextRun }, 'Scheduled message sent successfully');
     } catch (err) {
-      logger.error({ err, id: doc._id, name: doc.name, target: doc.targetName }, 'Error sending scheduled message');
+      logger.error({ err, id: doc._id, name: doc.name, target: doc.targetName }, 'Error in scheduled message execution');
     }
   }
 
