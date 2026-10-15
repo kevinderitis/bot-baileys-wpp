@@ -79,6 +79,7 @@ class Scheduler {
         logger.warn({ id: doc._id }, 'Message is already being sent, skipping duplicate');
         return;
       }
+      const now = new Date();
       if (fresh.lastSent) {
         const lastSent = new Date(fresh.lastSent);
         const diffMinutes = (now - lastSent) / 60000;
@@ -87,7 +88,6 @@ class Scheduler {
           return;
         }
       }
-      const now = new Date();
       if (!fresh.nextRun || new Date(fresh.nextRun) > now) {
         logger.info({ id: doc._id, nextRun: fresh.nextRun, now: now.toISOString() }, 'Message no longer due (DB check), skipping');
         return;
