@@ -83,8 +83,8 @@ class Scheduler {
       if (fresh.lastSent) {
         const lastSent = new Date(fresh.lastSent);
         const diffMinutes = (now - lastSent) / 60000;
-        if (diffMinutes < 2) {
-          logger.warn({ id: doc._id, lastSent: fresh.lastSent, diffMinutes }, 'Message was sent less than 2 minutes ago, skipping');
+        if (diffMinutes < 60) {
+          logger.warn({ id: doc._id, lastSent: fresh.lastSent, diffMinutes }, 'Message was sent less than 60 minutes ago, skipping');
           return;
         }
       }
@@ -138,35 +138,38 @@ class Scheduler {
     const tz = schedule.timezone || 'Asia/Bangkok';
     const [hh, mm] = schedule.time.split(':').map(Number);
 
-    const nowInTz = new Date(now.toLocaleString('en-US', { timeZone: tz }));
-    const runDate = new Date(nowInTz);
-    runDate.setHours(hh, mm, 0, 0);
+    const nowUtc = now.getTime();
+    const tzOffsetMs = this.getTzOffsetMs(now, tz);
+
+    const nowInTzMs = nowUtc + tzOffsetMs;
+    const runDateUtc = new Date(nowInTzMs);
+    runDateUtc.setUTCHours(hh, mm, 0, 0);
 
     if (schedule.type === 'daily') {
-      if (runDate <= nowInTz) runDate.setDate(runDate.getDate() + 1);
+      if (runDateUtc.getTime() <= nowInTzMs) runDateUtc.setUTCDate(runDateUtc.getUTCDate() + 1);
     } else if (schedule.type === 'weekly') {
-      const days = schedule.daysOfWeek || [nowInTz.getDay()];
+      const days = schedule.daysOfWeek || [runDateUtc.getUTCDay()];
       let nextDay = days.find(d => {
-        const candidate = new Date(runDate);
-        const diff = (d - candidate.getDay() + 7) % 7;
-        candidate.setDate(candidate.getDate() + diff);
-        return candidate > nowInTz;
+        const candidate = new Date(runDateUtc);
+        const diff = (d - candidate.getUTCDay() + 7) % 7;
+        candidate.setUTCDate(candidate.getUTCDate() + diff);
+        return candidate.getTime() > nowInTzMs;
       });
       if (nextDay === undefined) nextDay = days[0];
-      const diff = (nextDay - runDate.getDay() + 7) % 7;
-      runDate.setDate(runDate.getDate() + diff);
-      if (runDate <= nowInTz) runDate.setDate(runDate.getDate() + 7);
+      const diff = (nextDay - runDateUtc.getUTCDay() + 7) % 7;
+      runDateUtc.setUTCDate(runDateUtc.getUTCDate() + diff);
+      if (runDateUtc.getTime() <= nowInTzMs) runDateUtc.setUTCDate(runDateUtc.getUTCDate() + 7);
     } else {
-      if (runDate <= nowInTz) runDate.setDate(runDate.getDate() + 1);
+      if (runDateUtc.getTime() <= nowInTzMs) runDateUtc.setUTCDate(runDateUtc.getUTCDate() + 1);
     }
 
-    const tzOffsetMs = (() => {
-      const utcStr = now.toLocaleString('en-US', { timeZone: 'UTC' });
-      const tzStr = now.toLocaleString('en-US', { timeZone: tz });
-      return (new Date(utcStr) - new Date(tzStr));
-    })();
+    return new Date(runDateUtc.getTime() - tzOffsetMs);
+  }
 
-    return new Date(runDate.getTime() + tzOffsetMs);
+  getTzOffsetMs(date, tz) {
+    const utcStr = date.toLocaleString('en-US', { timeZone: 'UTC' });
+    const tzStr = date.toLocaleString('en-US', { timeZone: tz });
+    return new Date(tzStr).getTime() - new Date(utcStr).getTime();
   }
 
   refreshJob(doc) {
